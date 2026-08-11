@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrossVal Take-Home: Three Mini Apps — Design</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1d21;
+    --muted: #5c6470;
+    --border: #d9dde3;
+    --accent: #0f62fe;
+    --code-bg: #f4f6f8;
+    --th-bg: #f4f6f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --fg: #e6e9ed;
+      --muted: #9aa3af;
+      --border: #333a44;
+      --accent: #6ea8ff;
+      --code-bg: #1e2228;
+      --th-bg: #1e2228;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 .5rem; }
+  h2 { font-size: 1.35rem; margin: 2.5rem 0 .75rem; padding-bottom: .35rem; border-bottom: 1px solid var(--border); }
+  h1 + .meta { color: var(--muted); margin-bottom: 2rem; }
+  .meta div { margin: .15rem 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid var(--border); padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { background: var(--th-bg); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .875em; }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 4px; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: .3rem 0; }
+  strong { font-weight: 650; }
+  .callout {
+    border-left: 4px solid var(--accent);
+    background: var(--code-bg);
+    padding: .75rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1rem 0;
+  }
+  @media print {
+    body { background: #fff; color: #000; }
+    main { max-width: none; padding: 0; }
+    h2 { break-after: avoid; }
+    table, pre { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+<h1>CrossVal Take-Home: Three Mini Apps — Design</h1>
+<div class="meta">
+  <div><strong>Date:</strong> 2026-08-11</div>
+  <div><strong>Specs:</strong> <code>docs/multi-rate-pricing-calculator.pdf</code>, <code>docs/orders-and-settlements.pdf</code>, <code>docs/plan-vs-actual-tracker.pdf</code></div>
+  <div><strong>Goal:</strong> Ship all three assignments as one polished, free-hosted deliverable that reads as production financial engineering.</div>
+</div>
+
+<h2>Decisions (validated)</h2>
+<table>
+  <tr><th>Decision</th><th>Choice</th></tr>
+  <tr><td>Structure</td><td>One Next.js 15 (App Router) app, one repo, one deploy. Routes <code>/pricing</code>, <code>/orders</code>, <code>/planner</code> + landing page</td></tr>
+  <tr><td>Hosting</td><td>Vercel Hobby (free)</td></tr>
+  <tr><td>Database</td><td>Turso (libSQL) free tier, single DB, per-app table prefixes</td></tr>
+  <tr><td>ORM</td><td>Drizzle</td></tr>
+  <tr><td>Auth</td><td>Better Auth, email + password, one shared instance</td></tr>
+  <tr><td>Money</td><td>Integer cents everywhere; percents as basis points; <code>Money</code> value object with currency (USD)</td></tr>
+  <tr><td>Rounding</td><td>Half-up, per line, 2 decimals — the only rounding site is <code>lib/money.ts</code></td></tr>
+  <tr><td>Validation</td><td>Zod, shared schemas server + client</td></tr>
+  <tr><td>Tests</td><td>Vitest on pure calc modules + the three business-rule guards</td></tr>
+  <tr><td>UI</td><td>Tailwind + shadcn/ui, TanStack Query, react-hook-form, sonner toasts, Recharts, Papaparse</td></tr>
+  <tr><td>Git</td><td><strong>No init/commit/push unless the user explicitly asks</strong></td></tr>
+</table>
+
+<h2>Project layout</h2>
+<pre><code>app/
+  (marketing)/page.tsx        # Landing page linking the 3 apps
+  (auth)/login, /signup       # Shared auth pages
+  pricing/  orders/  planner/ # The 3 apps' UIs
+  api/
+    auth/[...all]/            # Better Auth handler
+    pricing/  orders/  planner/
+lib/
+  db/                         # Drizzle client + one schema file per app
+  money.ts                    # Money value object — sole rounding site
+  calc/                       # Pure per-app calculation modules (unit-tested)
+  api-utils.ts                # requireUser(), validate(), error envelope
+tests/
+docs/                         # Spec PDFs, this design, per-app README sections</code></pre>
+
+<h2>Data model</h2>
+<p><em>All money = integer cents, all IDs = text, all tables carry <code>userId</code>.</em></p>
+<ul>
+  <li><strong>Auth:</strong> Better Auth's <code>users</code>, <code>sessions</code>, <code>accounts</code>.</li>
+  <li><strong>Pricing:</strong> <code>pricing_documents</code> (title, customer, issueDate, status <code>draft|finalized</code>, stored totals: subtotal/discount/tax/grandTotal cents — recomputed server-side each write, frozen at finalize); <code>pricing_line_items</code> (documentId, description, quantity, unitPriceCents, discountType <code>percent|fixed|null</code>, discountValue (bp or cents), taxPercent bp).</li>
+  <li><strong>Orders:</strong> <code>orders</code> (customer, dueDate, totalCents); <code>order_line_items</code>; <code>payments</code> (orderId, amountCents, paidDate, note, idempotencyKey UNIQUE). <strong>Status never stored</strong> — derived by pure function from payments sum + due date.</li>
+  <li><strong>Planner:</strong> <code>categories</code> (name unique per user); <code>plans</code> (categoryId, month <code>YYYY-MM</code>, amountCents; unique userId+categoryId+month); <code>actuals</code> (multiple rows per category-month; report SUMs); <code>period_locks</code> (month; row exists ⇒ locked). Month granularity = "period close".</li>
+  <li><strong>Shared:</strong> <code>audit_log</code> (userId, app, entityType, entityId, action, detail JSON, createdAt) — written <strong>in the same transaction</strong> as the mutation. Logs finalize, duplicate, payment recorded, lock/unlock, rejected over-payment attempts. Shown as status history on order detail.</li>
+</ul>
+
+<h2>Financial-engineering signals (deliberate, README-visible)</h2>
+<ol>
+  <li><code>Money</code> value object, minor-units representation (Stripe pattern); no floats anywhere in DB or math.</li>
+  <li>Rounding policy stated as mode + boundary: half-up, per line, 2 dp. Penny-allocation (largest remainder) acknowledged in README as known territory.</li>
+  <li><code>payments</code> treated as a <strong>ledger</strong>: append-only (no update/delete endpoints), balances always derived, refunds = negative entries (stretch). Double-entry deferred to README "what I'd improve".</li>
+  <li><strong>Idempotency-Key</strong> header on payment creation; replay returns the original 201.</li>
+  <li>Over-payment check re-reads the paid sum <strong>inside a transaction</strong>.</li>
+  <li>Finalize freezes a totals snapshot; corrections via duplicate-to-new-draft (reversing-entry pattern) — implement this stretch goal.</li>
+  <li>Locking = period close, enforced by one server-side guard on every planner write path.</li>
+</ol>
+
+<h2>API design</h2>
+<p>Every handler: auth → validate → load + ownership check → business-rule guard → transaction (write + audit) → return server-computed state. Client never sends totals.</p>
+<div class="callout">
+  <strong>Error envelope:</strong> <code>{ "error": { "code", "message", "details?" } }</code><br>
+  Codes: 400 validation (Zod field errors in details), 401, 404 (not found or not owned — no existence leak), 409 business conflicts: <code>DOCUMENT_FINALIZED</code>, <code>OVER_PAYMENT</code> (message includes max allowed), <code>PERIOD_LOCKED</code>.
+</div>
+<p><strong>Endpoints:</strong></p>
+<ul>
+  <li><strong>Pricing:</strong> CRUD documents + nested line-items; <code>POST /documents/:id/finalize</code>; <code>POST /documents/:id/duplicate</code>; <code>GET /report?from&amp;to</code>.</li>
+  <li><strong>Orders:</strong> CRUD orders (lines replaced wholesale on PUT while editable); <code>POST /orders/:id/payments</code>; <code>GET /orders?status=</code>; detail includes payments + audit history.</li>
+  <li><strong>Planner:</strong> categories CRUD; <code>PUT /plans</code> upsert; actuals CRUD; <code>POST /actuals/import</code> (CSV, all-or-nothing, row-numbered errors); <code>POST /locks</code>, <code>DELETE /locks/:month</code>; <code>GET /report?from&amp;to</code>.</li>
+</ul>
+
+<h2>Documented edge-case choices</h2>
+<ul>
+  <li>Fixed discount &gt; line subtotal → <strong>reject</strong> (validation error), not clamp.</li>
+  <li>Both discount types set → reject.</li>
+  <li>Overdue order paid in full → <code>paid</code> (paid wins over overdue).</li>
+  <li>Plan = 0 → variance% <code>null</code>, rendered "—".</li>
+  <li>Missing actual → "—" for Actual/Variance/Variance% (consistent).</li>
+  <li>Orders remain editable until first payment, then lines become read-only (documented).</li>
+</ul>
+
+<h2>Frontend</h2>
+<p>Central API client parses the envelope: 400 field errors map inline to form inputs; 409/other errors → <strong>sonner toast</strong> with the server's actionable message; success toasts on mutations. Recharts chart on planner report (monthly net variance). Print stylesheet for pricing printable view. Seed script loads each spec's sample data so evaluators land on meaningful screens.</p>
+
+<h2>Testing</h2>
+<ul>
+  <li><code>calc/pricing</code> must reproduce the spec sample exactly: subtotal 450.00, discount 40.00, tax 11.50, grand total 421.50 (per-line 189.00 / 52.50 / 180.00).</li>
+  <li><code>calc/orders</code> status transitions incl. the $1,000 → $400 → $600 → reject-$1 scenario.</li>
+  <li><code>calc/planner</code> variance table from spec sample; plan=0 and missing-actual cases.</li>
+  <li>API guard tests: finalized-immutability, over-payment (incl. idempotent replay), period-lock.</li>
+</ul>
+
+<h2>Deployment ($0)</h2>
+<p>Vercel Hobby + Turso free tier. Env: <code>TURSO_DATABASE_URL</code>, <code>TURSO_AUTH_TOKEN</code>, <code>BETTER_AUTH_SECRET</code> via <code>vercel env</code>. Migrations via <code>drizzle-kit</code>. One URL with landing page; README per app (setup, rounding policy with worked example, lifecycle/locking rules, assumptions, production improvements, live URL).</p>
+
+<h2>Build order</h2>
+<ol>
+  <li>Scaffold Next.js + Tailwind/shadcn + Drizzle + Turso + Better Auth; landing + auth pages.</li>
+  <li><code>lib/money.ts</code> + all three calc modules <strong>with tests first</strong> (spec samples as fixtures).</li>
+  <li>Pricing app (API → UI → report → finalize/duplicate).</li>
+  <li>Orders app (API → payments/idempotency → dashboard → audit history).</li>
+  <li>Planner app (API → locking → CSV import → report + chart).</li>
+  <li>Seed script, READMEs, deploy, end-to-end pass through each spec's sample scenario.</li>
+</ol>
+</main>
+</body>
+</html>

@@ -1,0 +1,50 @@
+﻿Backend / Full Stack Developer
+Location: Dubai or Remote | Type: Full-Time | Experience: 3-6 years
+About CrossVal
+CrossVal is reimagining financial operations for businesses in the MENA region. We're building a smart financial platform that automates bookkeeping, tax compliance, reporting, and FP&A, so founders and finance teams can focus on growth, not spreadsheets. We've been recognized by Deloitte as one of the top 50 fastest-growing tech startups in the region, and we're part of the NVIDIA Inception program.
+
+
+CrossVal is like Cursor for Finance. Just like Cursor lets engineers ask natural-language questions about their codebase, CrossVal lets finance teams query, understand, and act on their financial data instantly, grounded in clean, connected data from banks, accounting tools, and tax systems.
+What You'll Do
+You'll join a fast moving product engineering team where everyone owns real scope:
+
+
+* Build and own backend services in Node.js and TypeScript on AWS
+* Design NoSQL data models in MongoDB, including schemas, indexes, and query patterns
+* Build and maintain integrations with third-party financial systems, covering OAuth flows, webhooks, rate limits, and inconsistent data from the other side
+* Take applications end to end: build, test, deploy, monitor, back up
+* Work on automation and AI agent workflows that act on live financial data, where correctness and auditability matter most
+* Ship fast, with a high sense of ownership
+
+
+The role is backend-first, but we work in a shared Next.js and TypeScript codebase, so you'll often carry a feature through to the UI rather than handing it off.
+Must-Haves
+* Strong Node.js and TypeScript
+* Solid NoSQL data modelling, with proven MongoDB experience in schema and index design
+* Hands-on AWS experience, and comfort operating what you deploy
+* A security instinct: careful secrets handling, least-privilege access, and building auditability into systems that touch financial data
+* Experience integrating third-party APIs at production quality, including auth, retries, idempotency, and failure handling
+* Ability to take an application end to end: build, test, deploy, monitor, maintain
+* Exposure to LLM and agent tooling in production
+* Driven, detail-oriented, and quick to pick up new tools
+Bonus (Nice-to-Have)
+* Full-stack range: comfortable in Next.js and React, building the interface for the APIs you write
+* Product sense for internal tools and dashboards, where you decide what the screen should show
+* Git-based workflows and CI/CD pipelines
+* Other databases (DynamoDB, Postgres)
+* Other cloud platforms (GCP, Azure)
+* Prior work in finance, accounting, or B2B SaaS, or comfort with concepts like double-entry, chart of accounts, and reconciliation
+* Workflow automation tooling such as n8n
+This Role Might Not Be For You If
+* You prefer working inside an existing framework over owning a service end to end
+* You'd rather hand infrastructure to a dedicated DevOps team
+* You want a strict backend-only boundary and no involvement with the frontend
+* You prefer detailed specs over figuring out ambiguous problems independently
+* You're not curious about AI and LLM tooling
+Location & Compensation
+Open to fully remote candidates and candidates based in Dubai. Compensation is aligned with market rates for the role, level, and location.
+Why CrossVal
+A growing team of builders with real traction and paying enterprise clients. You'll get hands-on exposure to fast-scaling systems and a close view of how modern fintech gets built in the UAE.
+
+
+Learn more at crossval.com, including our case studies and recent coverage in Entrepreneur.
