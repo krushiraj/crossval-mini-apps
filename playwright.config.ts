@@ -2,6 +2,8 @@ import path from "node:path";
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { E2E_DATABASE_URL } from "./tests/e2e/global-setup";
+
 const PORT = 3100;
 const baseURL = `http://localhost:${PORT}`;
 
@@ -19,6 +21,7 @@ const STORAGE_STATE = path.join(process.cwd(), "playwright/.auth/user.json");
 // app was left in, and would wipe your work.
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -42,7 +45,7 @@ export default defineConfig({
     timeout: 180_000,
     env: {
       BETTER_AUTH_URL: baseURL,
-      TURSO_DATABASE_URL: "file:./e2e.db",
+      TURSO_DATABASE_URL: E2E_DATABASE_URL,
     },
   },
 });
