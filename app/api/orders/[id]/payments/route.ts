@@ -19,6 +19,12 @@ import { recordPaymentSchema } from "@/lib/validation/orders";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+// libSQL gives no typed error for this, only a message.
+const isUniqueConstraintError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error);
+  return /UNIQUE constraint failed/i.test(message);
+};
+
 // This is the one place two requests at once could both look fine and
 // together take the order past its total. The check re-reads what's been paid
 // inside the transaction that inserts the payment, so the second one can't
@@ -100,6 +106,22 @@ export const POST = apiRoute(async (request, { params }: RouteContext) => {
       summary: summarizeOrder(order, allPayments),
     });
   } catch (error) {
+    // Same key racing itself: the unique index rejects the loser, whose caller
+    // should get the winner's payment rather than a 500.
+    if (idempotencyKey && isUniqueConstraintError(error)) {
+      const [existing] = await db
+        .select()
+        .from(payments)
+        .where(and(eq(payments.userId, user.id), eq(payments.idempotencyKey, idempotencyKey)));
+      if (existing) {
+        const paymentRows = await loadOrderPayments(db, id);
+        return created({
+          payment: serializePayment(existing),
+          summary: summarizeOrder(order, paymentRows),
+        });
+      }
+    }
+
     if (error instanceof ConflictError) {
       await db.transaction(async (tx) => {
         await recordAudit(tx, {
