@@ -54,3 +54,6 @@ local.db-*
 # e2e database
 e2e.db
 e2e.db-*
+
+# assignment briefs and planning notes, kept locally
+/docs
