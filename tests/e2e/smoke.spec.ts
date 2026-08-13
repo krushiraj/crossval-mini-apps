@@ -233,8 +233,10 @@ test.describe("planner", () => {
   test("the report reproduces the sample variance table", async ({ page }) => {
     await page.goto("/planner/report");
 
-    await page.locator('input[type="month"]').nth(0).fill("2026-01");
-    await page.locator('input[type="month"]').nth(1).fill("2026-02");
+    await page.getByLabel("From month").selectOption({ label: "January" });
+    await page.getByLabel("From year").selectOption("2026");
+    await page.getByLabel("To month").selectOption({ label: "February" });
+    await page.getByLabel("To year").selectOption("2026");
     await page.getByRole("button", { name: "Apply" }).click();
 
     await expect(page.getByRole("row", { name: /Marketing Jan 2026/ })).toContainText("-4.00%");
@@ -252,7 +254,8 @@ test.describe("planner", () => {
     await page.goto("/planner");
 
     // December 2025 is closed by the seed script.
-    await page.locator('input[type="month"]').first().fill("2025-12");
+    await page.getByLabel("Month month").selectOption({ label: "December" });
+    await page.getByLabel("Month year").selectOption("2025");
     await expect(page.getByRole("button", { name: /unlock month/i })).toBeVisible();
     await expect(page.getByRole("button", { name: "Add actual" })).toBeDisabled();
   });
@@ -260,7 +263,8 @@ test.describe("planner", () => {
   test("an unlocked month accepts a target", async ({ page }) => {
     await page.goto("/planner");
 
-    await page.locator('input[type="month"]').first().fill("2026-07");
+    await page.getByLabel("Month month").selectOption({ label: "July" });
+    await page.getByLabel("Month year").selectOption("2026");
     const marketingTarget = page.getByRole("row", { name: /Marketing/ }).getByRole("textbox").first();
 
     const current = await marketingTarget.inputValue();

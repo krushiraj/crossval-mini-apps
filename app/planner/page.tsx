@@ -27,6 +27,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import type { Actual } from "@/app/planner/_api";
 import { plannerApi, plannerKeys } from "@/app/planner/_api";
+import { MonthPicker } from "@/app/planner/month-picker";
 import { varianceTextClass } from "@/app/planner/variance-tone";
 
 const currentMonth = (): string => {
@@ -91,17 +92,12 @@ const PlannerPage = () => {
         title="Plans & actuals"
         description="Set a monthly target per category, log what actually happened, and close the month when it's final."
         action={
-          <div className="flex items-center gap-2">
-            <input
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value)}
-              className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
+          <div className="flex items-end gap-2">
+            {/* items-end, because the picker has a label above it and the button doesn't. */}
+            <MonthPicker label="Month" value={month} onChange={setMonth} />
             {isLocked ? (
               <Button
                 variant="secondary"
-                size="sm"
                 onClick={() => unlockMutation.mutate()}
                 loading={unlockMutation.isPending}
               >
@@ -110,7 +106,6 @@ const PlannerPage = () => {
             ) : (
               <Button
                 variant="secondary"
-                size="sm"
                 onClick={() => lockMutation.mutate()}
                 loading={lockMutation.isPending}
               >

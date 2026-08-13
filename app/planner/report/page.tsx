@@ -10,6 +10,7 @@ import { Button, Card, CardBody, CardHeader, EmptyState, LoadingRow, Stat, Table
 import { PageHeader } from "@/components/app-shell";
 import { plannerApi, plannerKeys } from "@/app/planner/_api";
 import { MonthlyVarianceChart } from "@/app/planner/report/variance-chart";
+import { MonthPicker } from "@/app/planner/month-picker";
 import { varianceTextClass, varianceTone } from "@/app/planner/variance-tone";
 
 const currentMonth = (): string => {
@@ -87,27 +88,9 @@ const ReportPage = () => {
       <Card className="mb-6">
         <CardBody>
           <form className="flex flex-wrap items-end gap-3" onSubmit={applyRange}>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">From</label>
-              <input
-                type="month"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">To</label>
-              <input
-                type="month"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-            <Button type="submit" size="sm">
-              Apply
-            </Button>
+            <MonthPicker label="From" value={from} onChange={setFrom} />
+            <MonthPicker label="To" value={to} onChange={setTo} />
+            <Button type="submit">Apply</Button>
             {!rangeValid ? (
               <p className="text-xs text-red-600">&ldquo;From&rdquo; must be on or before &ldquo;To&rdquo;.</p>
             ) : null}
