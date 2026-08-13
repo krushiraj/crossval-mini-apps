@@ -1,69 +1,97 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Calculator, PiggyBank, Receipt } from "lucide-react";
 
-export default function Home() {
+import { Button } from "@/components/ui";
+import { getSessionUser } from "@/lib/session";
+
+const apps = [
+  {
+    href: "/pricing",
+    icon: Calculator,
+    name: "Multi-Rate Pricing Calculator",
+    description:
+      "Documents with line items, per-line discounts and tax, draft/finalize lifecycle, and a date-range summary report.",
+    highlights: ["Server-side totals", "Immutable once finalized", "Duplicate to new draft"],
+  },
+  {
+    href: "/orders",
+    icon: Receipt,
+    name: "Orders and Settlements",
+    description:
+      "Orders with line items, an append-only payment ledger with partial payments, and a dashboard of amounts due.",
+    highlights: ["Derived status", "Over-payment rejected", "Idempotent payments"],
+  },
+  {
+    href: "/planner",
+    icon: PiggyBank,
+    name: "Plan vs Actual Tracker",
+    description:
+      "Monthly targets per category, actuals with CSV import, a variance report with a chart, and locked periods.",
+    highlights: ["Variance analysis", "CSV import", "Period close"],
+  },
+];
+
+const HomePage = async () => {
+  const user = await getSessionUser();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="mx-auto max-w-5xl px-4 py-16">
+      <header className="mb-10 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            CrossVal take-home
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold text-slate-900">Three mini full-stack apps</h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">
+            One Next.js application, one account, three assignments. Every amount is stored in
+            integer minor units and computed on the server; the browser only ever displays what the
+            API returns.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        {user ? (
+          <span className="rounded-full bg-white px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200">
+            Signed in as {user.email}
+          </span>
+        ) : (
+          <div className="flex gap-2">
+            <Link href="/login">
+              <Button variant="secondary">Sign in</Button>
+            </Link>
+            <Link href="/signup">
+              <Button>Create account</Button>
+            </Link>
+          </div>
+        )}
+      </header>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {apps.map((app) => (
+          <Link
+            key={app.href}
+            href={app.href}
+            className="group flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <app.icon className="h-5 w-5 text-slate-400" />
+            <h2 className="mt-3 text-sm font-semibold text-slate-900">{app.name}</h2>
+            <p className="mt-1.5 flex-1 text-xs leading-relaxed text-slate-600">
+              {app.description}
+            </p>
+            <ul className="mt-3 space-y-1">
+              {app.highlights.map((highlight) => (
+                <li key={highlight} className="text-xs text-slate-500">
+                  · {highlight}
+                </li>
+              ))}
+            </ul>
+            <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-slate-900">
+              Open
+              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default HomePage;
