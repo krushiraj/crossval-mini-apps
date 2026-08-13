@@ -222,6 +222,10 @@ export const Badge = ({
   return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
 };
 
+// w-full on its own isn't enough: inside an overflow-x-auto parent the table
+// shrinks to fit and squashes its columns, crushing any control in a cell down
+// to nothing. Tables holding inputs pass a min-w-[...] so the columns keep a
+// usable width and the wrapper scrolls instead.
 export const Table = ({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) => {
   return (
     <div className="w-full overflow-x-auto">

@@ -1,5 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+test.describe("layout", () => {
+  // A wide table scrolls inside its own container. The page itself must never
+  // scroll sideways, and columns must never be squeezed to fit.
+  for (const path of ["/pricing", "/orders", "/planner", "/planner/report"]) {
+    test(`${path} does not overflow sideways on a narrow screen`, async ({ page }) => {
+      await page.setViewportSize({ width: 700, height: 900 });
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+
+      const overflows = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      );
+      expect(overflows).toBe(false);
+    });
+  }
+});
+
 // Smoke coverage across the three apps, run against the seeded demo account
 // (`yarn db:seed`). These assert the numbers from the assignment briefs
 // actually reach the screen, and that server-side guards surface to the user.

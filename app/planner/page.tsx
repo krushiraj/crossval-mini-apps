@@ -208,7 +208,7 @@ const CategoryGrid = ({
   return (
     <Card>
       <CardHeader title={formatMonth(month)} description="Target vs. logged spend by category" />
-      <Table>
+      <Table className="min-w-[44rem]">
         <thead>
           <tr>
             <Th>Category</Th>

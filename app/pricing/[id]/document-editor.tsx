@@ -416,7 +416,7 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
           }
         />
           <CardBody className="px-0 py-0">
-            <Table>
+            <Table className="min-w-[64rem]">
               <thead>
                 <tr>
                   <Th>Description</Th>

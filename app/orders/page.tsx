@@ -107,7 +107,7 @@ const OrdersDashboardPage = () => {
               }
             />
           ) : (
-            <Table>
+            <Table className="min-w-[52rem]">
               <thead>
                 <tr>
                   <Th>Customer</Th>

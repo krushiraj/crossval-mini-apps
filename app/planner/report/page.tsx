@@ -164,7 +164,7 @@ const ReportPage = () => {
 
           <Card>
             <CardHeader title="Category x month detail" />
-            <Table>
+            <Table className="min-w-[48rem]">
               <thead>
                 <tr>
                   <Th>Category</Th>

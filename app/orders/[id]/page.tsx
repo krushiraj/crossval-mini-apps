@@ -404,7 +404,7 @@ const OrderDetailPage = () => {
               </div>
             </form>
           ) : (
-            <Table>
+            <Table className="min-w-[36rem]">
               <thead>
                 <tr>
                   <Th>Description</Th>
@@ -465,7 +465,7 @@ const OrderDetailPage = () => {
           {order.payments.length === 0 ? (
             <EmptyState title="No payments recorded yet" />
           ) : (
-            <Table>
+            <Table className="min-w-[36rem]">
               <thead>
                 <tr>
                   <Th>Date</Th>
