@@ -193,6 +193,38 @@ const CSV_AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
 //
 // It only reports. Refusing to import when there are errors is the route's
 // call, not the parser's.
+// Handles quoted fields, so a category like "Marketing, Inc" survives.
+const splitCsvRow = (line: string): string[] => {
+  const cells: string[] = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (quoted) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          cell += '"';
+          i += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        cell += char;
+      }
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ",") {
+      cells.push(cell);
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  cells.push(cell);
+  return cells.map((value) => value.trim());
+};
+
 export const parseActualsCsv = (
   text: string,
   { categoriesByName }: { categoriesByName: Map<string, { id: string; name: string }> },
@@ -215,14 +247,14 @@ export const parseActualsCsv = (
   };
 
   const [header, ...dataLines] = lines;
-  const headerCells = header.split(",").map((cell) => cell.trim().toLowerCase());
+  const headerCells = splitCsvRow(header).map((cell) => cell.toLowerCase());
   const hasHeader =
     headerCells.length === 3 && headerCells[0] === "month" && headerCells[1] === "category" && headerCells[2] === "amount";
   const bodyLines = hasHeader ? dataLines : lines;
 
   bodyLines.forEach((line, index) => {
     const rowNumber = index + 1;
-    const cells = line.split(",").map((cell) => cell.trim());
+    const cells = splitCsvRow(line);
 
     if (cells.length !== 3) {
       errors.push({

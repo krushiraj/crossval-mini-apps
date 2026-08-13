@@ -274,3 +274,36 @@ describe("parseActualsCsv", () => {
     expect(result.errors).toEqual([{ row: 0, message: "The CSV file is empty." }]);
   });
 });
+
+describe("csv rows with quotes", () => {
+  const categories = new Map([
+    ["Marketing, Inc", { id: "c1", name: "Marketing, Inc" }],
+    ["Payroll", { id: "c2", name: "Payroll" }],
+  ]);
+
+  it("keeps a comma inside a quoted category name", () => {
+    const result = parseActualsCsv('month,category,amount\n2026-01,"Marketing, Inc",100', {
+      categoriesByName: categories,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]?.categoryId).toBe("c1");
+    expect(result.rows[0]?.amountMinorUnits).toBe(10_000);
+  });
+
+  it("reads a doubled quote as one quote", () => {
+    const withQuote = new Map([['The "Big" One', { id: "c3", name: 'The "Big" One' }]]);
+    const result = parseActualsCsv('month,category,amount\n2026-01,"The ""Big"" One",50', {
+      categoriesByName: withQuote,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]?.categoryId).toBe("c3");
+  });
+
+  it("still reads unquoted rows", () => {
+    const result = parseActualsCsv("month,category,amount\n2026-01,Payroll,200", {
+      categoriesByName: categories,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]?.categoryId).toBe("c2");
+  });
+});
