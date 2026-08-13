@@ -223,3 +223,80 @@ export const payments = sqliteTable(
     uniqueIndex("payments_idempotency_key_idx").on(table.userId, table.idempotencyKey),
   ],
 );
+
+// Plan vs Actual Tracker
+
+export const categories = sqliteTable(
+  "categories",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [uniqueIndex("categories_user_name_idx").on(table.userId, table.name)],
+);
+
+export const plans = sqliteTable(
+  "plans",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade" }),
+    // "YYYY-MM"
+    month: text("month").notNull(),
+    amountMinorUnits: integer("amount_minor_units").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("plans_user_category_month_idx").on(table.userId, table.categoryId, table.month),
+    index("plans_user_month_idx").on(table.userId, table.month),
+  ],
+);
+
+// Several rows per category-month are fine. The report adds them up, which is
+// what makes CSV import and drilling into a figure straightforward.
+export const actuals = sqliteTable(
+  "actuals",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade" }),
+    // "YYYY-MM"
+    month: text("month").notNull(),
+    amountMinorUnits: integer("amount_minor_units").notNull(),
+    note: text("note"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("actuals_user_month_idx").on(table.userId, table.month),
+    index("actuals_user_category_month_idx").on(table.userId, table.categoryId, table.month),
+  ],
+);
+
+// A row here means that month is closed. Deleting it reopens the month.
+export const periodLocks = sqliteTable(
+  "period_locks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // "YYYY-MM" — locking is per calendar month.
+    month: text("month").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [uniqueIndex("period_locks_user_month_idx").on(table.userId, table.month)],
+);
