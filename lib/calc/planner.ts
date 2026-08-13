@@ -2,6 +2,7 @@
 // sample table from the brief without standing anything up.
 
 import { isIsoMonth, monthsBetween } from "@/lib/dates";
+import { MAX_MINOR_UNITS, formatMinorUnits } from "@/lib/money";
 
 export interface VarianceInput {
   planMinorUnits: number;
@@ -280,6 +281,16 @@ export const parseActualsCsv = (
 
     const [whole, fraction = ""] = amountText.split(".");
     const amountMinorUnits = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+
+    // The same ceiling POST /api/planner/actuals applies. Without it the CSV
+    // was a way in for an amount the API would have turned down.
+    if (amountMinorUnits > MAX_MINOR_UNITS) {
+      errors.push({
+        row: rowNumber,
+        message: `Amount "${amountText}" is too large. The most one row can be is ${formatMinorUnits(MAX_MINOR_UNITS)}.`,
+      });
+      return;
+    }
 
     rows.push({
       row: rowNumber,

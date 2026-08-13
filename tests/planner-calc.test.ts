@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildReport, computeVariance, parseActualsCsv } from "@/lib/calc/planner";
 import type { ReportActual, ReportCategory, ReportPlan } from "@/lib/calc/planner";
+import { MAX_MINOR_UNITS } from "@/lib/money";
 
 // The worked sample table from the assignment brief.
 const CATEGORIES: ReportCategory[] = [
@@ -260,6 +261,20 @@ describe("parseActualsCsv", () => {
     // Even though row 1 was valid, the caller is expected not to write anything
     // when errors is non-empty — that policy lives in the API route, not here.
     expect(result.rows).toHaveLength(1);
+  });
+
+  it("rejects an amount above the cap the API enforces", () => {
+    const csv = "month,category,amount\n2026-01,Marketing,2000000000\n";
+    const result = parseActualsCsv(csv, { categoriesByName });
+    expect(result.rows).toEqual([]);
+    expect(result.errors).toEqual([{ row: 1, message: expect.stringContaining("too large") }]);
+  });
+
+  it("accepts an amount exactly at the cap", () => {
+    const csv = "month,category,amount\n2026-01,Marketing,10000000\n";
+    const result = parseActualsCsv(csv, { categoriesByName });
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0].amountMinorUnits).toBe(MAX_MINOR_UNITS);
   });
 
   it("flags rows with the wrong number of columns", () => {
