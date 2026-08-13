@@ -301,7 +301,9 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
     setLines((current) => (current.length <= 1 ? [blankDraft()] : current.filter((_, i) => i !== index)));
   };
 
-  const handleSaveLines = () => {
+  // Returns null (after saying why) when a row can't be turned into a payload,
+  // so callers know to stop rather than save half of it.
+  const buildLinePayloads = (): LinePayload[] | null => {
     const payloads: LinePayload[] = [];
     for (const [index, draft] of lines.entries()) {
       // A lone blank row (the default empty state) saves as no lines,
@@ -310,17 +312,53 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
       const result = draftToPayload(draft, index);
       if ("error" in result) {
         toast.error(result.error);
-        return;
+        return null;
       }
       payloads.push(result.line);
     }
+    return payloads;
+  };
+
+  const hasUnsavedChanges = (): boolean => {
+    if (!query.data) return false;
+    const saved = query.data.lines.length > 0 ? query.data.lines.map(toDraft) : [blankDraft()];
+    const metadataChanged =
+      title !== query.data.title ||
+      customer !== query.data.customer ||
+      issueDate !== query.data.issueDate;
+    return metadataChanged || JSON.stringify(lines) !== JSON.stringify(saved);
+  };
+
+  const handleSaveLines = () => {
+    const payloads = buildLinePayloads();
+    if (!payloads) return;
     setLineErrors({});
     linesMutation.mutate(payloads);
   };
 
-  const handleFinalize = () => {
-    if (!window.confirm("Finalize this document? It becomes read-only and can no longer be edited.")) return;
-    finalizeMutation.mutate();
+  // Finalizing freezes the document, so anything still in the form would be
+  // lost. Save it first, and if that fails don't finalize at all.
+  const handleFinalize = async () => {
+    const unsaved = hasUnsavedChanges();
+    const payloads = unsaved ? buildLinePayloads() : [];
+    if (payloads === null) return;
+
+    const message = unsaved
+      ? "Finalize this document? Your unsaved changes will be saved first, and it then becomes read-only."
+      : "Finalize this document? It becomes read-only and can no longer be edited.";
+    if (!window.confirm(message)) return;
+
+    try {
+      if (unsaved) {
+        setLineErrors({});
+        await metadataMutation.mutateAsync();
+        await linesMutation.mutateAsync(payloads);
+      }
+      await finalizeMutation.mutateAsync();
+    } catch {
+      // Each mutation reports its own failure. Stopping here leaves the
+      // document a draft with the edits still in the form.
+    }
   };
 
   const handleDelete = () => {

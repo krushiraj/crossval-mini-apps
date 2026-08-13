@@ -106,6 +106,50 @@ test.describe("pricing", () => {
     expect(page.url()).toBe(url);
   });
 
+  test("finalizing saves unsaved lines instead of dropping them", async ({ page }) => {
+    page.on("dialog", (dialog) => dialog.accept());
+    await page.goto("/pricing");
+
+    // Its own document, so the shared fixtures stay as they are.
+    const id = await page.evaluate(async () => {
+      const response = await fetch("/api/pricing/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "E2E finalize",
+          customer: "E2E",
+          issueDate: "2026-01-15",
+          lines: [
+            {
+              description: "Widget",
+              quantity: 1,
+              unitPriceMinorUnits: 10000,
+              discountType: null,
+              discountValue: 0,
+              taxRateBasisPoints: 0,
+            },
+          ],
+        }),
+      });
+      const data = await response.json();
+      return (data.document ?? data).id as string;
+    });
+
+    await page.goto(`/pricing/${id}`);
+    await page.getByRole("button", { name: "Add line" }).click();
+
+    const newRow = page.locator("tbody tr").last();
+    await newRow.getByRole("textbox").nth(0).fill("Added but never saved");
+    await newRow.getByRole("textbox").nth(1).fill("3");
+    await newRow.getByRole("textbox").nth(2).fill("10.00");
+
+    // Finalize without clicking Save changes first.
+    await page.getByRole("button", { name: "Finalize" }).click();
+
+    await expect(page.getByRole("main")).toContainText("Added but never saved");
+    await expect(page.getByRole("main")).toContainText(/finalized/i);
+  });
+
   test("a finalized document is read-only and offers duplication instead", async ({ page }) => {
     await page.goto("/pricing");
 
