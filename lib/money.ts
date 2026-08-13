@@ -14,6 +14,10 @@ export const BASIS_POINTS_PER_UNIT = 10_000;
 
 export const MINOR_UNITS_PER_UNIT = 100;
 
+// Keeps quantity x price well inside Number.MAX_SAFE_INTEGER.
+export const MAX_MINOR_UNITS = 1_000_000_000;
+export const MAX_QUANTITY = 1_000_000;
+
 export class MoneyError extends Error {
   constructor(message: string) {
     super(message);

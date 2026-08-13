@@ -14,6 +14,7 @@ import { auth } from "@/lib/auth";
 import type { DatabaseOrTransaction } from "@/lib/db";
 import { auditLog } from "@/lib/db/schema";
 import { AppError, UnauthorizedError, ValidationError } from "@/lib/errors";
+import { MoneyError } from "@/lib/money";
 
 export const newId = (): string => {
   return nanoid();
@@ -96,6 +97,13 @@ export const noContent = (): NextResponse => {
 export const toErrorResponse = (error: unknown): NextResponse => {
   if (error instanceof AppError) {
     return NextResponse.json(error.toEnvelope(), { status: error.status });
+  }
+
+  // Reaching here means validation let something through, but the caller still
+  // gets a 400 rather than a 500 blaming us.
+  if (error instanceof MoneyError) {
+    const moneyError = new ValidationError("AMOUNT_OUT_OF_RANGE", error.message);
+    return NextResponse.json(moneyError.toEnvelope(), { status: moneyError.status });
   }
 
   if (error instanceof ZodError) {

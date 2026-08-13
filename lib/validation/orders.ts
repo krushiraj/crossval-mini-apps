@@ -6,6 +6,8 @@
 
 import { z } from "zod";
 
+import { MAX_MINOR_UNITS, MAX_QUANTITY } from "@/lib/money";
+
 import { isIsoDate } from "@/lib/dates";
 
 const isoDateSchema = z
@@ -14,11 +16,13 @@ const isoDateSchema = z
 
 export const orderLineItemSchema = z.object({
   description: z.string().trim().min(1, "Line item description is required.").max(200),
-  quantity: z.number().int("Quantity must be a whole number.").min(1, "Quantity must be at least 1."),
+  quantity: z.number().int("Quantity must be a whole number.").min(1, "Quantity must be at least 1.")
+    .max(MAX_QUANTITY, "Quantity is too large."),
   unitPriceMinorUnits: z
     .number()
     .int("Unit price must be an integer number of minor units.")
-    .min(0, "Unit price cannot be negative."),
+    .min(0, "Unit price cannot be negative.")
+    .max(MAX_MINOR_UNITS, "Unit price is too large."),
 });
 
 export const createOrderSchema = z.object({
@@ -41,7 +45,8 @@ export const recordPaymentSchema = z.object({
   amountMinorUnits: z
     .number()
     .int("Payment amount must be an integer number of minor units.")
-    .min(1, "Payment amount must be at least $0.01."),
+    .min(1, "Payment amount must be at least $0.01.")
+    .max(MAX_MINOR_UNITS, "Payment amount is too large."),
   paidDate: isoDateSchema,
   note: z.string().trim().max(500).optional(),
 });

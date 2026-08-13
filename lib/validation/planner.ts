@@ -6,6 +6,8 @@
 
 import { z } from "zod";
 
+import { MAX_MINOR_UNITS } from "@/lib/money";
+
 import { isIsoMonth } from "@/lib/dates";
 
 const isoMonthSchema = z
@@ -15,7 +17,8 @@ const isoMonthSchema = z
 const moneyAmountSchema = z
   .number()
   .int("Amount must be an integer number of minor units.")
-  .min(0, "Amount cannot be negative.");
+  .min(0, "Amount cannot be negative.")
+  .max(MAX_MINOR_UNITS, "Amount is too large.");
 
 // --------------------------------------------------------------------------
 // Categories

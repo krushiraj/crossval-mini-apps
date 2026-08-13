@@ -9,6 +9,7 @@
 import { z } from "zod";
 
 import { isIsoDate } from "@/lib/dates";
+import { MAX_MINOR_UNITS, MAX_QUANTITY } from "@/lib/money";
 
 const isoDate = z
   .string()
@@ -19,12 +20,17 @@ const isoDate = z
 // no default waiting to fill each key back in during parsing — a schema with
 // defaults would make every patch look non-empty after parsing, even `{}`.
 const lineItemFields = {
-  description: z.string().trim().min(1, "Description is required."),
-  quantity: z.number().int("Quantity must be a whole number.").min(1, "Quantity must be at least 1."),
+  description: z.string().trim().min(1, "Description is required.").max(500),
+  quantity: z
+    .number()
+    .int("Quantity must be a whole number.")
+    .min(1, "Quantity must be at least 1.")
+    .max(MAX_QUANTITY, "Quantity is too large."),
   unitPriceMinorUnits: z
     .number()
     .int("Unit price must be a whole number of minor units.")
-    .min(0, "Unit price cannot be negative."),
+    .min(0, "Unit price cannot be negative.")
+    .max(MAX_MINOR_UNITS, "Unit price is too large."),
   discountType: z.enum(["percent", "fixed"]).nullable(),
   discountValue: z.number().int("Discount must be a whole number.").min(0, "Discount cannot be negative."),
   taxRateBasisPoints: z
@@ -44,8 +50,8 @@ export const lineItemSchema = lineItemBase.extend({
 export type LineItemPayload = z.infer<typeof lineItemSchema>;
 
 export const createDocumentSchema = z.object({
-  title: z.string().trim().min(1, "Title is required."),
-  customer: z.string().trim().min(1, "Customer is required."),
+  title: z.string().trim().min(1, "Title is required.").max(200),
+  customer: z.string().trim().min(1, "Customer is required.").max(200),
   issueDate: isoDate,
   lines: z.array(lineItemSchema).default([]),
 });
@@ -54,8 +60,8 @@ export type CreateDocumentPayload = z.infer<typeof createDocumentSchema>;
 
 export const updateDocumentSchema = z
   .object({
-    title: z.string().trim().min(1, "Title is required.").optional(),
-    customer: z.string().trim().min(1, "Customer is required.").optional(),
+    title: z.string().trim().min(1, "Title is required.").max(200).optional(),
+    customer: z.string().trim().min(1, "Customer is required.").max(200).optional(),
     issueDate: isoDate.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
