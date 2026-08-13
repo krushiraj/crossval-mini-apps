@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
+import { assertCategoryNotInLockedPeriod } from "@/app/api/planner/_lib";
 import { apiRoute, noContent, ok, readJson, recordAudit, requireUser, validate } from "@/lib/api-utils";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/db/schema";
@@ -48,14 +49,15 @@ export const PATCH = apiRoute(async (request, { params }: { params: Promise<{ id
   });
 });
 
-// Cascades even into locked months: locking protects the numbers, not the
-// category list. Deliberate, and flagged in the README.
 export const DELETE = apiRoute(async (_request, { params }: { params: Promise<{ id: string }> }) => {
   const user = await requireUser();
   const { id } = await params;
   await loadOwnedCategory(user.id, id);
 
   return await db.transaction(async (tx) => {
+    // Inside the transaction, or a month locked at the same moment slips past.
+    await assertCategoryNotInLockedPeriod(user.id, id, tx);
+
     await tx.delete(categories).where(eq(categories.id, id));
     await recordAudit(tx, {
       userId: user.id,

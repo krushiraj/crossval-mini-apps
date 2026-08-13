@@ -314,6 +314,8 @@ const SEED_CATEGORIES = ["Marketing", "Payroll", "Tools"];
 
 // Plans and actuals from the brief's sample table (Marketing Feb intentionally omitted).
 const SEED_PLANS: Array<{ category: string; month: string; amountMinorUnits: number }> = [
+  // The locked month carries figures, like a real closed period.
+  { category: "Payroll", month: "2025-12", amountMinorUnits: 1_950_000 },
   { category: "Marketing", month: "2026-01", amountMinorUnits: 500_000 },
   { category: "Payroll", month: "2026-01", amountMinorUnits: 2_000_000 },
   { category: "Marketing", month: "2026-02", amountMinorUnits: 500_000 },

@@ -355,6 +355,16 @@ It's enforced **on the server, on every write path**: targets, individual actual
 
 The UI disables the controls too, but that's a convenience rather than the mechanism. Calling the API directly against a locked month returns 409. Editing an actual so that it *moves into* a locked month is refused as well, which is the case that's easy to miss.
 
+**Deleting a category is refused if it has figures in a closed month.** A delete takes the category's plans and actuals with it, so allowing it would rewrite a closed month's report without anyone unlocking anything. That was the back door into a locked period, and it's now shut by `assertCategoryNotInLockedPeriod()`, which runs inside the delete's transaction so a month locked at the same moment can't slip past:
+
+```json
+{ "error": { "code": "CATEGORY_IN_LOCKED_PERIOD",
+  "message": "This category has figures in Dec 2025, which is locked. Unlock it before deleting the category.",
+  "details": { "months": ["2025-12"] } } }
+```
+
+Unlock the month, delete the category, lock it again. The audit log keeps all three steps.
+
 ### CSV import
 
 Takes the format from the brief:

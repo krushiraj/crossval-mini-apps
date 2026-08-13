@@ -306,6 +306,17 @@ test.describe("planner", () => {
     await expect(page.getByRole("button", { name: "Add actual" })).toBeDisabled();
   });
 
+  test("a category with figures in a locked month cannot be deleted", async ({ page }) => {
+    await page.goto("/planner/categories");
+    page.on("dialog", (dialog) => dialog.accept());
+
+    // Payroll has a December 2025 plan, and that month is closed.
+    await page.getByRole("row", { name: /Payroll/ }).getByLabel("Delete").click();
+
+    await expect(page.getByText(/Dec 2025.*locked/i).first()).toBeVisible();
+    await expect(page.getByRole("row", { name: /Payroll/ })).toBeVisible();
+  });
+
   test("an unlocked month accepts a target", async ({ page }) => {
     await page.goto("/planner");
 
