@@ -3,17 +3,30 @@ import { expect, test } from "@playwright/test";
 test.describe("layout", () => {
   // A wide table scrolls inside its own container. The page itself must never
   // scroll sideways, and columns must never be squeezed to fit.
-  for (const path of ["/pricing", "/orders", "/planner", "/planner/report"]) {
-    test(`${path} does not overflow sideways on a narrow screen`, async ({ page }) => {
-      await page.setViewportSize({ width: 700, height: 900 });
-      await page.goto(path);
-      await page.waitForLoadState("networkidle");
+  const widths = [390, 700];
+  const paths = [
+    "/pricing",
+    "/orders",
+    "/planner",
+    "/planner/report",
+    "/planner/categories",
+    "/pricing/new",
+    "/orders/new",
+  ];
 
-      const overflows = await page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-      );
-      expect(overflows).toBe(false);
-    });
+  for (const path of paths) {
+    for (const width of widths) {
+      test(`${path} does not overflow sideways at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        await page.waitForLoadState("networkidle");
+
+        const overflows = await page.evaluate(
+          () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        );
+        expect(overflows).toBe(false);
+      });
+    }
   }
 });
 

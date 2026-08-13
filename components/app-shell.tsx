@@ -30,7 +30,7 @@ export const AppShell = ({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="no-print border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
+        <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:flex-nowrap sm:gap-4 sm:py-0">
           <Link href="/" className="text-sm font-semibold text-slate-900">
             CrossVal
           </Link>
@@ -39,7 +39,7 @@ export const AppShell = ({
             {appName}
           </Link>
 
-          <nav className="ml-6 flex items-center gap-1">
+          <nav className="flex items-center gap-1 sm:ml-6">
             {nav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -47,7 +47,7 @@ export const AppShell = ({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-sm transition-colors",
+                    "rounded-md px-2 py-1.5 text-sm transition-colors sm:px-3",
                     active
                       ? "bg-slate-100 font-medium text-slate-900"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
