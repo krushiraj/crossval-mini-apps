@@ -162,15 +162,15 @@ The `payments` table is treated as a ledger rather than as editable state. It is
 ## Testing
 
 ```bash
-yarn test   # 109 unit tests, the calculation modules
-yarn e2e    # 18 browser tests, against a production build
+yarn test   # 124 unit tests, the calculation modules
+yarn e2e    # 34 browser tests, against a production build
 ```
 
 `yarn e2e` uses its **own** database, `./e2e.db`, and reseeds it before every run. It never touches your development data, so you can run the suite at any point without losing what you were working on, and the tests get predictable fixtures instead of whatever state the app happened to be left in.
 
 **Unit tests.** The calculation modules are plain functions with no database or HTTP, which makes them both the most valuable thing to test and the easiest to test properly. Each brief's sample data is a fixture, so the suite fails the moment a documented number stops matching: the pricing example's 450.00 / 40.00 / 11.50 / 421.50, the order scenario of $400 then $600 then a refused $1, and the planner's variance table. Rounding is tested at the half-cent boundary in both directions, including negative amounts.
 
-**Browser tests.** The unit tests prove the numbers are right. These prove they reach the screen, and that a refused write tells the user why instead of failing quietly. They cover the signed-out redirect, signing out, the sample document's totals, amounts previewing as you type, Enter saving a line, an out-of-range value marking its row and blocking the save, finalizing keeping unsaved edits, a finalized document being read-only with duplication offered instead, all four order statuses and the status filter, an over-payment showing the maximum you can record, the variance table with a missing actual, a locked month being read-only, and every page staying free of sideways scrolling at 700px wide.
+**Browser tests.** The unit tests prove the numbers are right. These prove they reach the screen, and that a refused write tells the user why instead of failing quietly. They cover the signed-out redirect, signing out, the sample document's totals, amounts previewing as you type, Enter saving a line, an out-of-range value marking its row and blocking the save, finalizing keeping unsaved edits, a finalized document being read-only with duplication offered instead, all four order statuses and the status filter, an over-payment showing the maximum you can record, the variance table with a missing actual, a locked month being read-only, and every page staying free of sideways scrolling at 390px and 700px wide.
 
 Tests that change a document create their own and delete it afterwards, so they don't depend on or damage the seeded fixtures. Signing in happens once in a setup project and is shared, because signing in per test hits the auth rate limit and then you're debugging throttling instead of your app.
 
@@ -338,7 +338,7 @@ Monthly targets per category, actuals with CSV import, a variance report with a 
 Variance is actual minus plan, so a negative number means you spent less than planned. The percentage is variance over plan, to two decimal places.
 
 - **Plan of 0** gives no percentage, shown as "—". There isn't a meaningful percentage of zero, and the report never shows `NaN` or `Infinity`. The variance amount is still shown, since actual minus zero is perfectly well defined.
-- **No actual logged** shows "—" for the actual, the variance and the percentage, consistently across the table, the chart and the API. The brief allows treating a missing actual as zero instead. I chose not to, because "nothing has been logged yet" and "zero was spent" are different facts, and treating them the same would show a made-up -100% for a month nobody has reported on. In the brief's sample data that's the 2026-02 Marketing row.
+- **No actual logged** shows "—" for the actual, the variance and the percentage in that category's row, in the chart and in the API. The brief allows treating a missing actual as zero instead. I chose not to, because "nothing has been logged yet" and "zero was spent" are different facts, and treating them the same would show a made-up -100% for a month nobody has reported on. In the brief's sample data that's the 2026-02 Marketing row. Month totals and the summary tiles are the one deliberate exception: they sum what was actually logged, so a missing actual contributes 0 there, and a month total keeps meaning "everything logged that month" rather than going blank because one category hasn't reported yet.
 
 Reproducing the brief's sample table, from the seeded data and asserted in `tests/planner-calc.test.ts`:
 
@@ -457,7 +457,7 @@ If per-row aggregation stopped being cheap, the next steps in order would be: to
 
 **Two writers at once.** SQLite's single-writer model does the heavy lifting today. On Postgres I'd take an explicit lock on the order row when recording a payment, or run the transaction as serializable with a retry, and add a load test that fires concurrent payments at one order to prove the rule holds rather than reasoning about it.
 
-**Testing.** 109 unit tests cover the calculation modules and 18 browser tests cover the main flows. The gap is API-level tests against a real database for each guard: finalized immutability, over-payment, period locks, idempotent retries, CSV atomicity. I checked all of those by hand over HTTP while building, and they should be automated rather than re-checked by hand.
+**Testing.** 124 unit tests cover the calculation modules and 34 browser tests cover the main flows. The gap is API-level tests against a real database for each guard: finalized immutability, over-payment, period locks, idempotent retries, CSV atomicity. I checked all of those by hand over HTTP while building, and they should be automated rather than re-checked by hand.
 
 **Running it.** Structured request logging with correlation IDs, error reporting, and a metric on refused writes by error code, since a spike in over-payments or locked-period edits is a product signal rather than noise. Rate limiting on the auth endpoints. Backups, and a restore you've actually practised.
 
