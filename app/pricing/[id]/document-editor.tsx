@@ -26,6 +26,7 @@ import { ApiError, api } from "@/lib/api-client";
 import { computeLine } from "@/lib/calc/pricing";
 import type { DocumentTotals, LineTotals } from "@/lib/calc/pricing";
 import { formatIsoDate } from "@/lib/dates";
+import { BASIS_POINTS_PER_UNIT } from "@/lib/money";
 import {
   basisPointsToPercentInput,
   formatMoney,
@@ -154,6 +155,38 @@ const previewDocument = (drafts: LineDraft[]): DocumentTotals | null => {
     }),
     { subtotalMinorUnits: 0, totalDiscountMinorUnits: 0, totalTaxMinorUnits: 0, grandTotalMinorUnits: 0 },
   );
+};
+
+// Flags real problems while typing — tax over 100%, discount over 100%, a
+// fixed discount bigger than the line. Doesn't flag empty fields: a row
+// someone has only started isn't wrong yet, just unfinished.
+const liveRowError = (draft: LineDraft): string | null => {
+  const taxBasisPoints = percentInputToBasisPoints(draft.taxPercent || "0");
+  if (taxBasisPoints === null) return "Tax percent is not a valid number.";
+  if (taxBasisPoints > BASIS_POINTS_PER_UNIT) return "Tax percent must be between 0 and 100.";
+
+  if (draft.discountType === "percent") {
+    const discountBasisPoints = percentInputToBasisPoints(draft.discountValue || "0");
+    if (discountBasisPoints === null) return "Discount percent is not a valid number.";
+    if (discountBasisPoints > BASIS_POINTS_PER_UNIT) {
+      return "Discount percent must be between 0 and 100.";
+    }
+  }
+
+  if (draft.discountType === "fixed") {
+    const discount = parseAmountToMinorUnits(draft.discountValue || "0");
+    const unitPrice = parseAmountToMinorUnits(draft.unitPrice);
+    const quantity = Number(draft.quantity);
+    if (discount === null) return "Discount amount is not a valid amount.";
+    if (unitPrice !== null && Number.isInteger(quantity) && quantity >= 1) {
+      const subtotal = unitPrice * quantity;
+      if (discount > subtotal) {
+        return `Fixed discount is more than the line subtotal of ${formatMoney(subtotal)}.`;
+      }
+    }
+  }
+
+  return null;
 };
 
 // Pulls `lines.<index>.<field>` errors out of the field map so each row can show its own message.
@@ -309,6 +342,11 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
       // A lone blank row (the default empty state) saves as no lines,
       // instead of failing on the empty description.
       if (lines.length === 1 && !draft.description.trim() && draft.unitPrice === "0.00") continue;
+      const rangeProblem = liveRowError(draft);
+      if (rangeProblem) {
+        toast.error(`Line ${index + 1}: ${rangeProblem}`);
+        return null;
+      }
       const result = draftToPayload(draft, index);
       if ("error" in result) {
         toast.error(result.error);
@@ -521,8 +559,13 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
                   ? lines.map((line, index) => {
                       const errors = lineErrors[index] ?? {};
                       const preview = previewLine(line, index);
+                      const rowMessages = [liveRowError(line), ...Object.values(errors)].filter(
+                        (message): message is string => Boolean(message),
+                      );
+                      const hasError = rowMessages.length > 0;
                       return (
-                        <tr key={line.id ?? `new-${index}`}>
+                        <React.Fragment key={line.id ?? `new-${index}`}>
+                        <tr className={hasError ? "bg-red-200 align-middle" : "align-middle"}>
                           <Td>
                             <Input
                               className="min-w-[12rem]"
@@ -601,6 +644,17 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
                             </Button>
                           </Td>
                         </tr>
+                        {rowMessages.length > 0 ? (
+                          <tr>
+                            <td
+                              colSpan={10}
+                              className="border-b border-slate-100 px-3 pb-2 text-[11px] font-medium text-red-700"
+                            >
+                              <span role="alert">{rowMessages.join(" ")}</span>
+                            </td>
+                          </tr>
+                        ) : null}
+                        </React.Fragment>
                       );
                     })
                   : document.lines.map((line) => (

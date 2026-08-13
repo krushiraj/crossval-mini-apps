@@ -150,6 +150,24 @@ test.describe("pricing", () => {
     await expect(page.getByRole("main")).toContainText(/finalized/i);
   });
 
+  test("an out-of-range value marks its row and blocks saving", async ({ page }) => {
+    await page.goto("/pricing");
+    await page
+      .getByRole("row", { name: /Sample document from the brief/ })
+      .getByRole("link")
+      .first()
+      .click();
+
+    const row = page.locator("tbody tr").first();
+    await row.getByRole("textbox").last().fill("150");
+
+    await expect(row).toHaveClass(/bg-red-200/);
+    await expect(page.getByText("Tax percent must be between 0 and 100.").first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText(/Line 1: Tax percent must be between 0 and 100/)).toBeVisible();
+  });
+
   test("a finalized document is read-only and offers duplication instead", async ({ page }) => {
     await page.goto("/pricing");
 
