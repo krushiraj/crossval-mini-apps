@@ -44,3 +44,13 @@ next-env.d.ts
 # local database file
 local.db
 local.db-*
+
+# playwright
+/playwright/.auth
+/test-results
+/playwright-report
+/blob-report
+
+# e2e database
+e2e.db
+e2e.db-*
