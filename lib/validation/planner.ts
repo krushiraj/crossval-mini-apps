@@ -1,8 +1,5 @@
-// Request-body and query-param schemas for the Plan vs Actual Tracker API.
-// Zod handles shape and type validation; the business rules that depend on
-// stored state (does this month exist, is it locked, does the category
-// belong to this user) are checked in the route handlers after loading,
-// following the same split used by the other two apps' validation modules.
+// Shape only. Rules needing stored state, like whether a month is locked,
+// are checked in the routes.
 
 import { z } from "zod";
 
@@ -20,10 +17,6 @@ const moneyAmountSchema = z
   .min(0, "Amount cannot be negative.")
   .max(MAX_MINOR_UNITS, "Amount is too large.");
 
-// --------------------------------------------------------------------------
-// Categories
-// --------------------------------------------------------------------------
-
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required.").max(100),
 });
@@ -31,10 +24,6 @@ export const createCategorySchema = z.object({
 export const updateCategorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required.").max(100),
 });
-
-// --------------------------------------------------------------------------
-// Plans
-// --------------------------------------------------------------------------
 
 export const upsertPlanSchema = z.object({
   categoryId: z.string().trim().min(1, "categoryId is required."),
@@ -51,10 +40,6 @@ export const plansQuerySchema = z
     message: "`from` must be on or before `to`.",
     path: ["from"],
   });
-
-// --------------------------------------------------------------------------
-// Actuals
-// --------------------------------------------------------------------------
 
 export const createActualSchema = z.object({
   categoryId: z.string().trim().min(1, "categoryId is required."),
@@ -89,17 +74,9 @@ export const importActualsSchema = z.object({
   csv: z.string().min(1, "CSV content is required."),
 });
 
-// --------------------------------------------------------------------------
-// Locks
-// --------------------------------------------------------------------------
-
 export const lockMonthSchema = z.object({
   month: isoMonthSchema,
 });
-
-// --------------------------------------------------------------------------
-// Report
-// --------------------------------------------------------------------------
 
 export const reportQuerySchema = z
   .object({

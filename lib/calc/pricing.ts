@@ -1,9 +1,5 @@
-// Discount comes off first, then tax is worked out on what's left. Getting
-// that order the wrong way round changes the answer, which is why the brief
-// spells it out.
-//
-// Document totals just add up the rounded line amounts, so subtotal minus
-// discount plus tax always equals the grand total.
+// Discount first, then tax on what's left. The other order gives a different
+// answer.
 
 import { ValidationError } from "@/lib/errors";
 import { BASIS_POINTS_PER_UNIT, Money } from "@/lib/money";
@@ -102,11 +98,8 @@ const assertLineIsValid = (line: LineItemInput, index: number): void => {
   }
 };
 
-// One discount type per line, never both — there's only one field for it, so
-// that can't be got wrong.
-//
-// A fixed discount bigger than the line is rejected, not trimmed to fit.
-// Trimming would turn a typo into a free line and nobody would notice.
+// A fixed discount bigger than the line is rejected, not trimmed. Trimming
+// would turn a typo into a free line.
 export const computeLine = (line: LineItemInput, index = 0): LineTotals => {
   assertLineIsValid(line, index);
 
@@ -124,7 +117,7 @@ export const computeLine = (line: LineItemInput, index = 0): LineTotals => {
         { field: "discountValue", lineIndex: index, maxDiscountMinorUnits: subtotal.minorUnits },
       );
     }
-  };
+  }
 
   const discounted = subtotal.subtract(discount);
   const tax = discounted.applyRate(line.taxRateBasisPoints);

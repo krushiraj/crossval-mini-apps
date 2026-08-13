@@ -16,9 +16,7 @@ const resolveBaseUrl = (): string => {
 
 const baseURL = resolveBaseUrl();
 
-// Requests from anywhere else are refused, which is what stops another site
-// driving a signed-in session. Local development allows the ports Next.js
-// falls back to when 3000 is taken.
+// Anything else is refused, which stops another site driving a session.
 const trustedOrigins =
   process.env.NODE_ENV === "production"
     ? [baseURL, "https://*.vercel.app"]

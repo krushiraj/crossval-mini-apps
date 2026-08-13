@@ -29,11 +29,8 @@ export const GET = apiRoute(async (_request, { params }: RouteContext) => {
   return ok(serializeOrderDetail(order, lines, paymentRows, auditRows));
 });
 
-// Customer and due date stay editable regardless of payment history — they
-// describe who owes the money and when it's expected, not the settled
-// amount, so changing them after a payment is recorded carries no
-// bookkeeping risk. Lines and the total are the separate, payment-gated
-// endpoint (PUT .../lines).
+// Customer/dueDate stay editable after payments since they don't affect the
+// settled amount; lines and total are locked in PUT .../lines instead.
 export const PATCH = apiRoute(async (request, { params }: RouteContext) => {
   const user = await requireUser();
   const { id } = await params;
@@ -82,7 +79,7 @@ export const DELETE = apiRoute(async (_request, { params }: RouteContext) => {
       "ORDER_HAS_PAYMENTS",
       "This order already has payments recorded and can no longer be deleted.",
     );
-  };
+  }
 
   await db.transaction(async (tx) => {
     await recordAudit(tx, {

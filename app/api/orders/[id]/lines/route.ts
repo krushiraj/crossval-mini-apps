@@ -16,12 +16,8 @@ import { replaceOrderLinesSchema } from "@/lib/validation/orders";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-// An order is editable until its first payment is recorded; after that,
-// lines and the total are read-only. A payment is an assertion about a
-// specific total ("the customer paid $400 of $1,000"), and letting the
-// total move underneath it would silently break that assertion — a $400
-// payment against a total quietly cut to $300 no longer reconciles.
-// Corrections after that go in as new payments or refunds instead.
+// Once a payment exists, lines/total are locked: a payment asserts against a
+// specific total, and moving that total would silently break the assertion.
 export const PUT = apiRoute(async (request, { params }: RouteContext) => {
   const user = await requireUser();
   const { id } = await params;
@@ -35,7 +31,7 @@ export const PUT = apiRoute(async (request, { params }: RouteContext) => {
       "ORDER_HAS_PAYMENTS",
       "This order already has payments recorded and can no longer be edited. Record a further payment or a refund instead.",
     );
-  };
+  }
 
   const totals = computeOrderTotal(body.lines);
 

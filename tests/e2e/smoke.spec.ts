@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("layout", () => {
-  // A wide table scrolls inside its own container. The page itself must never
-  // scroll sideways, and columns must never be squeezed to fit.
+  // The page itself must never scroll sideways; a wide table scrolls inside its own container.
   const widths = [390, 700];
   const paths = [
     "/pricing",
@@ -30,11 +29,8 @@ test.describe("layout", () => {
   }
 });
 
-// Smoke coverage across the three apps, run against the seeded demo account
-// (`yarn db:seed`). These assert the numbers from the assignment briefs
-// actually reach the screen, and that server-side guards surface to the user.
-//
-// The session comes from the `setup` project — see playwright.config.ts.
+// Requires the seeded demo account (`yarn db:seed`); session comes from the
+// `setup` project in playwright.config.ts.
 
 test.describe("landing", () => {
   test("links to all three apps", async ({ page }) => {

@@ -158,9 +158,8 @@ const CategoryRow = ({ category, onChanged }: { category: Category; onChanged: (
     return (
       <tr>
         <Td>
-          {/* Input and its buttons are in separate <td>s, so one <form> can't
-              wrap both — Enter/Escape are handled here directly instead,
-              same as the plan-target inputs on the main planner page. */}
+          {/* Separate <td>s mean one <form> can't wrap both, so Enter/Escape
+              are handled here directly (same pattern as the plan-target inputs). */}
           <Field error={error} className="max-w-xs">
             <Input
               value={name}

@@ -1,9 +1,7 @@
 "use client";
 
-// One bar per month: the sum of (actual − plan) across every category,
-// coloured like the table — green under budget, red over. A month with no
-// actuals still gets a bar, in grey, so a gap in reporting doesn't look the
-// same as being on plan.
+// Coloured like the table — green under budget, red over. A month with no
+// actuals still gets a grey bar, so a reporting gap doesn't look like "on plan".
 
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 

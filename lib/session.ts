@@ -25,6 +25,6 @@ export const requirePageUser = async (returnTo?: string): Promise<SessionUser> =
   const user = await getSessionUser();
   if (!user) {
     redirect(returnTo ? `/login?next=${encodeURIComponent(returnTo)}` : "/login");
-  };
+  }
   return user;
 };

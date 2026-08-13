@@ -1,9 +1,5 @@
-// Every route follows the same order: check who's asking, check the input,
-// load the row and confirm it's theirs, check the rule, then write the change
-// and its audit entry together. Routes don't invent their own order.
-//
-// Handlers just throw. apiRoute catches and turns it into the one response
-// shape the browser knows how to read.
+// Every route: authenticate, validate, load and check ownership, check the
+// rule, then write the change and its audit entry together.
 
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -44,7 +40,7 @@ export const validate = <T>(schema: ZodType<T>, data: unknown): T => {
   const result = schema.safeParse(data);
   if (result.success) {
     return result.data;
-  };
+  }
   throw new ValidationError("VALIDATION_FAILED", summarizeIssues(result.error), {
     fields: fieldErrorsFrom(result.error),
   });
@@ -56,7 +52,7 @@ const fieldErrorsFrom = (error: ZodError): Record<string, string> => {
     const path = issue.path.join(".") || "_";
     if (!fields[path]) {
       fields[path] = issue.message;
-    };
+    }
   }
   return fields;
 };
@@ -141,9 +137,7 @@ export interface AuditEntry {
   detail?: Record<string, unknown>;
 }
 
-// Takes the transaction, not the database, on purpose: the audit row commits
-// with the change it describes, so there's no way to end up with one and not
-// the other.
+// Takes the transaction so the audit row commits with the change it describes.
 export const recordAudit = async (
   tx: DatabaseOrTransaction,
   entry: AuditEntry,

@@ -7,10 +7,7 @@ import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui";
 import { signOut } from "@/lib/auth-client";
 
-// Ends the session and returns to the login screen.
-//
-// Lives in its own client component so server components — the landing page,
-// for one — can offer sign-out without becoming client components themselves.
+// Its own client component so server pages can offer sign-out.
 export const SignOutButton = ({
   variant = "secondary",
   size = "sm",

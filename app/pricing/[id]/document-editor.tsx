@@ -93,12 +93,12 @@ const draftToPayload = (draft: LineDraft, index: number): { line: LinePayload } 
   const quantity = /^\d+$/.test(draft.quantity.trim()) ? Number(draft.quantity) : NaN;
   if (!Number.isInteger(quantity) || quantity < 1) {
     return { error: `Line ${index + 1}: quantity must be a whole number of at least 1.` };
-  };
+  }
 
   const unitPriceMinorUnits = parseAmountToMinorUnits(draft.unitPrice);
   if (unitPriceMinorUnits === null || unitPriceMinorUnits < 0) {
     return { error: `Line ${index + 1}: unit price is not a valid amount.` };
-  };
+  }
 
   const discountType: DiscountType | null = draft.discountType || null;
   let discountValue = 0;
@@ -115,7 +115,7 @@ const draftToPayload = (draft: LineDraft, index: number): { line: LinePayload } 
   const taxRateBasisPoints = percentInputToBasisPoints(draft.taxPercent || "0");
   if (taxRateBasisPoints === null) {
     return { error: `Line ${index + 1}: tax percent is invalid.` };
-  };
+  }
 
   return {
     line: {
@@ -129,10 +129,8 @@ const draftToPayload = (draft: LineDraft, index: number): { line: LinePayload } 
   };
 };
 
-// Shows the numbers as you type, using the same calc module the API uses, so
-// it can't disagree with what saving will store. The server still works every
-// amount out again on save — that's what's kept. A row that isn't finished
-// previews as "—" rather than a half-right number.
+// Same calc module the API uses, so the preview can't disagree with what gets
+// saved. The server still recomputes on save.
 const previewLine = (draft: LineDraft, index: number): LineTotals | null => {
   const payload = draftToPayload(draft, index);
   if ("error" in payload) return null;
@@ -143,7 +141,6 @@ const previewLine = (draft: LineDraft, index: number): LineTotals | null => {
   }
 };
 
-// Only meaningful once every row is valid.
 const previewDocument = (drafts: LineDraft[]): DocumentTotals | null => {
   const previews = drafts.map((draft, index) => previewLine(draft, index));
   if (previews.some((preview) => preview === null)) return null;
@@ -158,9 +155,8 @@ const previewDocument = (drafts: LineDraft[]): DocumentTotals | null => {
   );
 };
 
-// Flags real problems while typing — tax over 100%, discount over 100%, a
-// fixed discount bigger than the line. Doesn't flag empty fields: a row
-// someone has only started isn't wrong yet, just unfinished.
+// Doesn't flag empty fields — a row someone has only started isn't wrong yet,
+// just unfinished.
 const liveRowError = (draft: LineDraft): string | null => {
   const taxBasisPoints = percentInputToBasisPoints(draft.taxPercent || "0");
   if (taxBasisPoints === null) return "Tax percent is not a valid number.";
@@ -220,10 +216,8 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
   const [lines, setLines] = React.useState<LineDraft[]>([]);
   const [lineErrors, setLineErrors] = React.useState<Record<number, Record<string, string>>>({});
 
-  // Loads server data into the form once per document, adjusting state
-  // during render instead of using an effect (React's pattern for this,
-  // avoids an extra render). After that, saving re-syncs state itself, so a
-  // background refetch never overwrites edits the user hasn't saved yet.
+  // Adjusts state during render instead of an effect (avoids an extra render).
+  // Saving re-syncs state, so a refetch never overwrites unsaved edits.
   const [hydratedId, setHydratedId] = React.useState<string | null>(null);
   if (query.data && query.data.id !== hydratedId) {
     setHydratedId(query.data.id);

@@ -4,11 +4,8 @@ import * as React from "react";
 
 import { Label, Select } from "@/components/ui";
 
-// Month selector backed by two dropdowns, producing a "YYYY-MM" value.
-//
-// `<input type="month">` is a plain text box in Safari and Firefox — the user
-// ends up typing "2026-07" by hand and guessing the format. Two dropdowns
-// work the same everywhere and can't hold an invalid month.
+// <input type="month"> is a plain text box in Safari and Firefox, leaving
+// people to type "2026-07" and guess the format.
 
 const MONTH_NAMES = [
   "January",

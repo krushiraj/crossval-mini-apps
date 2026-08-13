@@ -4,10 +4,8 @@ import { apiRoute, ok, requireUser, validate } from "@/lib/api-utils";
 import { db, schema } from "@/lib/db";
 import { reportQuerySchema } from "@/lib/validation/pricing";
 
-// Aggregates over the stored totals columns rather than recomputing from
-// line items, so this is a cheap SQL sum that always agrees with what each
-// document page shows. Includes drafts and finalized documents alike — the
-// report covers everything issued in the range, not just what's locked.
+// Aggregates over stored totals rather than recomputing from line items, so
+// it's a cheap SQL sum. Includes drafts, not just finalized documents.
 export const GET = apiRoute(async (request) => {
   const user = await requireUser();
   const url = new URL(request.url);

@@ -1,6 +1,4 @@
-// Due dates and issue dates are days, not moments in time, so they're kept as
-// "YYYY-MM-DD" text. That sorts correctly as a string and has no timezone to
-// get wrong.
+// Days, not moments, so they're text. Sorts correctly and has no timezone.
 
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const ISO_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;

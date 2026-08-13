@@ -20,11 +20,8 @@ export const GET = apiRoute(async (request) => {
   return ok({ plans: rows });
 });
 
-// Upserts by (categoryId, month); the unique index
-// plans_user_category_month_idx backs this at the DB level. We still
-// select-then-write inside a transaction rather than relying on
-// onConflictDoUpdate, so both branches can attach the pre-update state to
-// the audit entry the same way.
+// Upserts by (categoryId, month); select-then-write instead of
+// onConflictDoUpdate so both branches can log pre-update audit state.
 export const PUT = apiRoute(async (request) => {
   const user = await requireUser();
   const body = validate(upsertPlanSchema, await readJson(request));
@@ -60,7 +57,7 @@ export const PUT = apiRoute(async (request) => {
         month: body.month,
         amountMinorUnits: body.amountMinorUnits,
       });
-    };
+    }
 
     await recordAudit(tx, {
       userId: user.id,

@@ -16,11 +16,8 @@ export const GET = apiRoute(async () => {
   return ok({ categories: rows });
 });
 
-// Names are unique per user, case-insensitively — "Marketing" and
-// "marketing" would otherwise split spend across two rows in the report.
-// Checked in JS against the small per-user list rather than a SQL LOWER()
-// index; the DB's case-sensitive unique index is a second line of defense
-// against a race between two concurrent requests.
+// Uniqueness is case-insensitive, checked in JS rather than a SQL LOWER()
+// index; the DB's case-sensitive index guards only against a race.
 export const POST = apiRoute(async (request) => {
   const user = await requireUser();
   const body = validate(createCategorySchema, await readJson(request));

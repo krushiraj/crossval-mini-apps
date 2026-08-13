@@ -1,9 +1,5 @@
-// The amount paid is always the sum of the payment rows. Nothing stores a
-// running balance, so there's nothing that can drift out of step with them.
-//
-// assertPaymentAllowed is the only thing that can turn a payment down, and it
-// has to be called inside the transaction that inserts the payment. Called
-// before, two payments arriving together could both look affordable.
+// Paid is always the sum of the payment rows; no stored balance to drift.
+// assertPaymentAllowed must run inside the insert's transaction.
 
 import { ConflictError, ValidationError } from "@/lib/errors";
 import { Money } from "@/lib/money";
@@ -67,17 +63,7 @@ export const computeOrderTotal = (lines: OrderLineItemInput[]): OrderTotals => {
   };
 };
 
-// Two orderings matter here, and both are tested:
-//
-// Paid beats overdue. An order that went past its due date but has since been
-// settled reads as paid. The status says where it stands now, not where it's
-// been.
-//
-// Overdue beats partly paid. Past the date and still short is overdue, whether
-// they've paid nothing or nearly all of it. The amount due is shown next to it
-// either way.
-//
-// Due today isn't late yet.
+// Paid beats overdue, overdue beats partly paid. Due today isn't late yet.
 export const deriveStatus = ({
   totalMinorUnits,
   paidMinorUnits,
@@ -101,13 +87,8 @@ export const deriveStatus = ({
   return "pending";
 };
 
-// Two different refusals. An amount under a penny is just bad input. An amount
-// that would take the order past its total is a rule, so it says what the
-// maximum is — in the message for the person, and in the details so the form
-// can offer to correct it.
-//
-// The already-paid figure has to be read inside the transaction that inserts
-// the payment, or two at once could both pass this check.
+// alreadyPaid must be read inside the insert's transaction, or two payments
+// at once could both pass.
 export const assertPaymentAllowed = ({
   totalMinorUnits,
   alreadyPaidMinorUnits,
@@ -135,7 +116,7 @@ export const assertPaymentAllowed = ({
       `Payment of ${attempted.format()} exceeds the amount due. The maximum you can record is ${maxAllowed.format()}.`,
       { maxAllowedMinorUnits: Math.max(maxAllowedMinorUnits, 0) },
     );
-  };
+  }
 };
 
 export interface OrderPaymentInput {

@@ -2,11 +2,8 @@ import path from "node:path";
 
 import { expect, test as setup } from "@playwright/test";
 
-// Signs in once and saves the session for every other spec to reuse.
-//
-// Signing in per test would be both slower and wrong: the auth endpoints are
-// rate limited, so a suite that authenticates repeatedly starts failing on
-// throttled requests rather than on real defects.
+// Signs in once and saves the session for every spec to reuse — auth
+// endpoints are rate limited, so signing in per test would start failing.
 
 export const STORAGE_STATE = path.join(process.cwd(), "playwright/.auth/user.json");
 

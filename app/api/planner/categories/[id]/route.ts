@@ -31,7 +31,7 @@ export const PATCH = apiRoute(async (request, { params }: { params: Promise<{ id
       throw new ConflictError("DUPLICATE_CATEGORY_NAME", `A category named "${body.name}" already exists.`, {
         field: "name",
       });
-    };
+    }
 
     await tx.update(categories).set({ name: body.name }).where(eq(categories.id, id));
     await recordAudit(tx, {
@@ -48,11 +48,8 @@ export const PATCH = apiRoute(async (request, { params }: { params: Promise<{ id
   });
 });
 
-// Deleting a category cascades to its plans and actuals (onDelete: cascade
-// in the schema). We don't block deleting a category with history in a
-// locked month — locking protects the plan/actual values, not the category
-// list — but that's a judgment call worth revisiting before production
-// (see README).
+// Cascades even into locked months: locking protects the numbers, not the
+// category list. Deliberate, and flagged in the README.
 export const DELETE = apiRoute(async (_request, { params }: { params: Promise<{ id: string }> }) => {
   const user = await requireUser();
   const { id } = await params;

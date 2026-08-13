@@ -1,6 +1,5 @@
-// Typed wrappers around the shared api client, for the Plan vs Actual
-// Tracker's own endpoints. Kept local to app/planner since `@/lib/api-client`
-// itself is shared by the other two apps too.
+// Typed wrappers around the shared api client, kept local to app/planner
+// since @/lib/api-client itself is shared by the other two apps too.
 
 import { api } from "@/lib/api-client";
 import type { Report } from "@/lib/calc/planner";

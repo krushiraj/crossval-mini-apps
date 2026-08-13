@@ -31,7 +31,7 @@ export const PATCH = apiRoute<RouteContext>(async (request, { params }) => {
     const targetIndex = currentLines.findIndex((line) => line.id === lineId);
     if (targetIndex === -1) {
       throw new NotFoundError("Line item not found.");
-    };
+    }
 
     const nextLines = currentLines.map(toLineItemInput);
     nextLines[targetIndex] = { ...nextLines[targetIndex], ...patch };
@@ -66,7 +66,7 @@ export const DELETE = apiRoute<RouteContext>(async (_request, { params }) => {
     const currentLines = await loadLines(tx, id);
     if (!currentLines.some((line) => line.id === lineId)) {
       throw new NotFoundError("Line item not found.");
-    };
+    }
 
     const nextLines = currentLines.filter((line) => line.id !== lineId).map(toLineItemInput);
 

@@ -1,8 +1,5 @@
-// Request-body schemas for the Orders and Settlements API. Zod handles shape
-// and type validation (is this an integer, is this a valid ISO date); the
-// business rules that depend on stored state (does this order have payments,
-// would this payment overpay it) live in lib/calc/orders.ts and are checked
-// after the row is loaded, not here.
+// Shape only. Rules needing stored state, like whether a payment overpays,
+// live in lib/calc/orders.ts.
 
 import { z } from "zod";
 

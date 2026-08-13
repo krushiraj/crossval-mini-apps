@@ -19,10 +19,8 @@ const loadOwnedActual = async (userId: string, id: string) => {
   return actual;
 };
 
-// An actual can be edited only if its current month is open, and if the
-// edit moves it to a different month, that month must be open too. Skip
-// either check and someone could edit inside a closed month, or dodge a
-// lock by moving spend into it after the fact.
+// Both the current and target month must be unlocked, or someone could dodge
+// a lock by moving spend into it after the fact.
 export const PATCH = apiRoute(async (request, { params }: { params: Promise<{ id: string }> }) => {
   const user = await requireUser();
   const { id } = await params;
@@ -32,7 +30,7 @@ export const PATCH = apiRoute(async (request, { params }: { params: Promise<{ id
   await assertMonthUnlocked(user.id, existing.month);
   if (body.month && body.month !== existing.month) {
     await assertMonthUnlocked(user.id, body.month);
-  };
+  }
 
   return await db.transaction(async (tx) => {
     if (body.categoryId) {

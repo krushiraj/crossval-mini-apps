@@ -11,9 +11,8 @@ export const GET = apiRoute(async () => {
   return ok({ locks: rows });
 });
 
-// Locking an already-locked month is idempotent: it returns the existing
-// lock rather than erroring, since two "close January" clicks in a row
-// isn't a conflict worth surfacing.
+// Locking an already-locked month is idempotent: returns the existing lock
+// rather than erroring.
 export const POST = apiRoute(async (request) => {
   const user = await requireUser();
   const body = validate(lockMonthSchema, await readJson(request));

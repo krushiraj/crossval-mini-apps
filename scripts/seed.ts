@@ -1,10 +1,5 @@
-// Seeds a demo account with the sample data from all three assignment briefs,
-// so a reviewer lands on meaningful screens instead of empty states.
-//
-//   yarn db:seed
-//
-// Re-running deletes and recreates the demo user's data. It never touches any
-// other account.
+// yarn db:seed — deletes and recreates the demo user's data on each run;
+// never touches any other account.
 
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -75,10 +70,6 @@ const clearDemoData = async (userId: string): Promise<void> => {
   await db.delete(categories).where(eq(categories.userId, userId));
   await db.delete(auditLog).where(eq(auditLog.userId, userId));
 };
-
-// --------------------------------------------------------------------------
-// App 1 — Pricing
-// --------------------------------------------------------------------------
 
 interface SeedDocument {
   title: string;
@@ -225,10 +216,6 @@ const seedPricing = async (userId: string): Promise<void> => {
   }
 };
 
-// --------------------------------------------------------------------------
-// App 2 — Orders
-// --------------------------------------------------------------------------
-
 interface SeedOrder {
   customer: string;
   dueDate: string;
@@ -238,8 +225,7 @@ interface SeedOrder {
 
 const SEED_ORDERS: SeedOrder[] = [
   {
-    // The sample scenario from the brief, left partially paid so the reviewer
-    // can finish it and watch the status change.
+    // Left partially paid so the reviewer can watch the status change.
     customer: "Acme Corp",
     dueDate: daysFromToday(7),
     lines: [{ description: "Annual licence", quantity: 2, unitPriceMinorUnits: 50_000 }],
@@ -274,8 +260,7 @@ const SEED_ORDERS: SeedOrder[] = [
 const seedOrders = async (userId: string): Promise<void> => {
   for (const seed of SEED_ORDERS) {
     const orderId = nanoid();
-    // Uses the shared calc module, exactly like the API, so seed data can't
-    // disagree with data created through the app.
+    // Uses the shared calc module so seed data can't disagree with the API.
     const computed = computeOrderTotal(seed.lines);
 
     await db.insert(orders).values({
@@ -325,10 +310,6 @@ const seedOrders = async (userId: string): Promise<void> => {
   }
 };
 
-// --------------------------------------------------------------------------
-// App 3 — Planner
-// --------------------------------------------------------------------------
-
 const SEED_CATEGORIES = ["Marketing", "Payroll", "Tools"];
 
 // Plans and actuals from the brief's sample table (Marketing Feb intentionally omitted).
@@ -361,7 +342,7 @@ const seedPlanner = async (userId: string): Promise<void> => {
     const id = nanoid();
     categoryIds.set(name, id);
     await db.insert(categories).values({ id, userId, name });
-  };
+  }
 
   for (const plan of SEED_PLANS) {
     await db.insert(plans).values({

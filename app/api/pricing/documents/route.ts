@@ -38,7 +38,7 @@ export const POST = apiRoute(async (request) => {
   // create instead of leaving behind an empty document.
   if (body.lines.length > 0) {
     computeDocument(body.lines);
-  };
+  }
 
   const document = await db.transaction(async (tx) => {
     const id = newId();

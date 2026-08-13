@@ -10,12 +10,8 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-// This is the sanctioned way to "edit" a finalized document: copy it (draft
-// or finalized) into a new draft for the same user.
-//
-// The copy's issue date defaults to today, since it's a new document being
-// drafted now, not a re-issue of the original's date. Title and customer
-// carry over unchanged.
+// The sanctioned way to edit a finalized document: copy it into a new draft.
+// Issue date defaults to today since it's a new document, not a re-issue.
 export const POST = apiRoute<RouteContext>(async (_request, { params }) => {
   const user = await requireUser();
   const { id } = await params;

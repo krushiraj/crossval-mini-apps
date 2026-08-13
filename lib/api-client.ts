@@ -51,7 +51,7 @@ export const apiFetch = async <T>(path: string, init: RequestInit = {}): Promise
       envelope?.error?.message ?? "The request failed. Please try again.",
       envelope?.error?.details,
     );
-  };
+  }
 
   return payload as T;
 };

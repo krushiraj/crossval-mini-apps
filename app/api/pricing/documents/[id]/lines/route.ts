@@ -17,8 +17,6 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-// Full replace is the simplest correct way to save an edited table of
-// lines: validate the whole set, recompute, and persist in one transaction.
 export const PUT = apiRoute<RouteContext>(async (request, { params }) => {
   const user = await requireUser();
   const { id } = await params;

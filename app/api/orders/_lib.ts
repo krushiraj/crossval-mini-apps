@@ -1,7 +1,3 @@
-// Shared helpers for the orders routes: loading rows with ownership checks,
-// and the DTO shapes sent to the client. Kept in one place so every handler
-// derives paid/due/status the same way, via lib/calc/orders.ts.
-
 import { and, desc, eq } from "drizzle-orm";
 
 import { computeOrderSummary } from "@/lib/calc/orders";
@@ -16,9 +12,8 @@ export type OrderLineItemRow = typeof orderLineItems.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type AuditLogRow = typeof auditLog.$inferSelect;
 
-// Loads an order scoped to the requesting user. A missing order and one
-// that belongs to someone else both 404 — we never reveal that another
-// user's order exists (see NotFoundError's doc comment).
+// A missing order and one owned by someone else both 404, so we never
+// reveal another user's order exists.
 export const loadOwnedOrder = async (
   handle: DatabaseOrTransaction,
   userId: string,

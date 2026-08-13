@@ -17,12 +17,8 @@ export interface Variance {
   variancePercent: number | null;
 }
 
-// Nothing logged yet shows as "—" rather than 0. They're different facts, and
-// treating them the same would show a made-up -100% for a month nobody has
-// reported on.
-//
-// A plan of 0 gives no percentage — there isn't one — but the amount is still
-// worked out. Variance is actual minus plan, so negative means under budget.
+// Nothing logged shows as "—", not 0: treating them alike would invent a
+// -100% for a month nobody has reported on. A plan of 0 gives no percentage.
 export const computeVariance = ({ planMinorUnits, actualMinorUnits }: VarianceInput): Variance => {
   if (actualMinorUnits === null) {
     return {
@@ -106,14 +102,14 @@ export const buildReport = ({
   for (const plan of plans) {
     if (!monthSet.has(plan.month)) continue;
     planByKey.set(`${plan.categoryId}:${plan.month}`, plan.amountMinorUnits);
-  };
+  }
 
   const actualSumByKey = new Map<string, number>();
   for (const actual of actuals) {
     if (!monthSet.has(actual.month)) continue;
     const key = `${actual.categoryId}:${actual.month}`;
     actualSumByKey.set(key, (actualSumByKey.get(key) ?? 0) + actual.amountMinorUnits);
-  };
+  }
 
   const keys = new Set<string>([...planByKey.keys(), ...actualSumByKey.keys()]);
 
@@ -132,7 +128,7 @@ export const buildReport = ({
       month,
       ...computeVariance({ planMinorUnits, actualMinorUnits }),
     });
-  };
+  }
 
   rows.sort((a, b) => a.categoryName.localeCompare(b.categoryName) || a.month.localeCompare(b.month));
 
@@ -188,11 +184,6 @@ export interface ParseActualsCsvResult {
 
 const CSV_AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
 
-// Collects every bad row instead of stopping at the first, so someone fixing a
-// file sees the whole list in one go.
-//
-// It only reports. Refusing to import when there are errors is the route's
-// call, not the parser's.
 // Handles quoted fields, so a category like "Marketing, Inc" survives.
 const splitCsvRow = (line: string): string[] => {
   const cells: string[] = [];
@@ -225,6 +216,8 @@ const splitCsvRow = (line: string): string[] => {
   return cells.map((value) => value.trim());
 };
 
+// Collects every bad row rather than stopping at the first. Only reports;
+// refusing the import is the route's call.
 export const parseActualsCsv = (
   text: string,
   { categoriesByName }: { categoriesByName: Map<string, { id: string; name: string }> },
@@ -244,7 +237,7 @@ export const parseActualsCsv = (
 
   if (lines.length === 0) {
     return { rows, errors: [{ row: 0, message: "The CSV file is empty." }] };
-  };
+  }
 
   const [header, ...dataLines] = lines;
   const headerCells = splitCsvRow(header).map((cell) => cell.toLowerCase());
@@ -262,7 +255,7 @@ export const parseActualsCsv = (
         message: `Expected 3 columns (month,category,amount), found ${cells.length}.`,
       });
       return;
-    };
+    }
 
     const [month, categoryName, amountText] = cells;
 
@@ -275,7 +268,7 @@ export const parseActualsCsv = (
     if (!category) {
       errors.push({ row: rowNumber, message: `Unknown category "${categoryName}".` });
       return;
-    };
+    }
 
     if (!CSV_AMOUNT_PATTERN.test(amountText)) {
       errors.push({

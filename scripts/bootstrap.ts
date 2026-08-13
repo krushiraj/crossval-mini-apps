@@ -1,15 +1,3 @@
-// One-command setup: apply the schema, then load the sample data.
-//
-//   yarn bootstrap
-//
-// With no configuration this targets the local SQLite file (./local.db), so
-// a fresh clone runs without any cloud credentials.
-//
-// If TURSO_DATABASE_URL points at a remote database, the script refuses to
-// run unless --yes is passed. Seeding deletes and recreates the demo
-// account's data — fine locally, not something that should happen to a
-// deployed database because someone had that env var set in their shell.
-
 import { spawnSync } from "node:child_process";
 
 const LOCAL_URL = "file:./local.db";

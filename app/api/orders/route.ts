@@ -21,9 +21,9 @@ export const GET = apiRoute(async (request) => {
         "INVALID_STATUS_FILTER",
         `status must be one of: ${orderStatusFilterSchema.options.join(", ")}.`,
       );
-    };
+    }
     statusFilter = parsed.data;
-  };
+  }
 
   const [orderRows, paymentRows] = await Promise.all([
     db.select().from(orders).where(eq(orders.userId, user.id)),
@@ -37,14 +37,13 @@ export const GET = apiRoute(async (request) => {
       bucket.push(payment);
     } else {
       paymentsByOrder.set(payment.orderId, [payment]);
-    };
-  };
+    }
+  }
 
   const today = todayIsoDate();
   const items = orderRows
     .map((order) => serializeOrderListItem(order, paymentsByOrder.get(order.id) ?? [], today))
-    // Filtering happens after derivation — an order's stored fields never
-    // carry a status, only the payments and due date it's derived from.
+    // Status isn't a stored field, so filtering must happen after derivation.
     .filter((item) => !statusFilter || item.status === statusFilter)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
@@ -55,8 +54,6 @@ export const POST = apiRoute(async (request) => {
   const user = await requireUser();
   const body = validate(createOrderSchema, await readJson(request));
 
-  // Computes the total the same way every other reader of an order's amount
-  // does, via the shared calc module.
   const totals = computeOrderTotal(body.lines);
 
   const orderId = newId();

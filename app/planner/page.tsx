@@ -165,10 +165,6 @@ const PlannerPage = () => {
   );
 };
 
-// --------------------------------------------------------------------------
-// Category x month grid
-// --------------------------------------------------------------------------
-
 const CategoryGrid = ({
   month,
   categories,
@@ -190,7 +186,7 @@ const CategoryGrid = ({
     const list = actualsByCategory.get(actual.categoryId) ?? [];
     list.push(actual);
     actualsByCategory.set(actual.categoryId, list);
-  };
+  }
 
   // Totals come from what's saved on the server, not what's being typed —
   // the row above previews the typed value, this footer shows what's stored.
@@ -275,9 +271,8 @@ const CategoryRow = ({
   );
   const [planError, setPlanError] = React.useState<string | undefined>();
 
-  // Re-syncs the input when the server value changes elsewhere (another tab,
-  // a refetch). Adjusted during render, not in an effect — React's pattern
-  // for state that tracks a prop.
+  // Re-syncs the input when the server value changes elsewhere (another tab, a
+  // refetch). Adjusted during render, not an effect — React's pattern for this.
   const [syncedPlanMinorUnits, setSyncedPlanMinorUnits] = React.useState(planMinorUnits);
   if (planMinorUnits !== syncedPlanMinorUnits) {
     setSyncedPlanMinorUnits(planMinorUnits);
@@ -332,21 +327,15 @@ const CategoryRow = ({
     if (amount === null || amount < 0) {
       setPlanError("Enter a valid non-negative amount.");
       return;
-    };
+    }
     if (amount === planMinorUnits) return;
     upsertPlanMutation.mutate(amount);
   };
 
-
-  // Can't wrap this cell in its own <form> — the actual entries and variance
-  // live in sibling cells of the same row. Enter/Escape are handled directly instead.
-
   const actualTotal = entries.length > 0 ? entries.reduce((sum, entry) => sum + entry.amountMinorUnits, 0) : null;
 
-  // Preview variance from what's typed, not just the saved plan, so it
-  // updates live. Saving is still what actually persists the target.
-  // An empty field previews as a 0 target (matches "no plan saved"); anything
-  // else invalid previews as "—" instead of a stale or NaN value.
+  // Preview uses the typed value, not the saved plan, so it updates live.
+  // Empty previews as a 0 target; anything else invalid previews as "—".
   const trimmedPlanInput = planInput.trim();
   const typedPlanMinorUnits = trimmedPlanInput === "" ? 0 : parseAmountToMinorUnits(planInput);
   const previewPlanMinorUnits =
@@ -412,10 +401,6 @@ const CategoryRow = ({
   );
 };
 
-// --------------------------------------------------------------------------
-// Add actual
-// --------------------------------------------------------------------------
-
 const AddActualForm = ({
   month,
   categories,
@@ -432,9 +417,8 @@ const AddActualForm = ({
   const [note, setNote] = React.useState("");
   const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
 
-  // Defaults the select to the first category once categories load.
-  // Adjusted during render, not an effect, since it's just deriving state
-  // from the prop.
+  // Defaults the select to the first category once categories load, adjusted
+  // during render rather than an effect since it's deriving state from a prop.
   if (!categoryId && categories[0]) {
     setCategoryId(categories[0].id);
   }
@@ -444,7 +428,7 @@ const AddActualForm = ({
       const amountMinorUnits = parseAmountToMinorUnits(amount);
       if (amountMinorUnits === null || amountMinorUnits < 0) {
         throw new Error("INVALID_AMOUNT");
-      };
+      }
       return plannerApi.createActual({
         categoryId,
         month,
@@ -513,10 +497,6 @@ const AddActualForm = ({
   );
 };
 
-// --------------------------------------------------------------------------
-// CSV import
-// --------------------------------------------------------------------------
-
 const CsvImportPanel = ({ onImported }: { onImported: () => void }) => {
   const [csv, setCsv] = React.useState("");
   const [rowErrors, setRowErrors] = React.useState<{ row: number; message: string }[]>([]);
@@ -542,9 +522,8 @@ const CsvImportPanel = ({ onImported }: { onImported: () => void }) => {
     },
   });
 
-  // Reads the raw file text instead of parsing it client-side — the server
-  // does the real parsing, and re-serializing rows first could subtly
-  // reformat what the user uploaded.
+  // Reads the raw file text instead of parsing client-side — the server does
+  // the real parsing; re-serializing rows first could subtly reformat them.
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;

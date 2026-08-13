@@ -1,10 +1,5 @@
-// Zod schemas for the Multi-Rate Pricing Calculator API.
-//
-// These mirror the shape `lib/calc/pricing.ts` expects (`LineItemInput`) but
-// stay purely structural — range checks that depend on *other* fields (a
-// fixed discount exceeding the line subtotal, a percent discount above 100%)
-// are the calculation module's job, since it is the single source of truth
-// for those rules and already reports them with a specific error code.
+// Shape only. Rules that depend on other fields, like a discount bigger than
+// its line, belong to lib/calc/pricing.ts.
 
 import { z } from "zod";
 
@@ -15,10 +10,8 @@ const isoDate = z
   .string()
   .refine((value) => isIsoDate(value), { message: "Must be a valid date in YYYY-MM-DD format." });
 
-// Fields with no `.default()` applied. Used directly by `updateLineSchema`:
-// `.partial()` only makes an empty `{}` correctly *stay* empty when there is
-// no default waiting to fill each key back in during parsing — a schema with
-// defaults would make every patch look non-empty after parsing, even `{}`.
+// No defaults: with them, .partial() would make even an empty patch look
+// non-empty after parsing.
 const lineItemFields = {
   description: z.string().trim().min(1, "Description is required.").max(500),
   quantity: z

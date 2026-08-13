@@ -1,10 +1,5 @@
-// Every amount here is a whole number of cents, so no decimal ever reaches the
-// database or takes part in a sum. Percentages are whole basis points, so 5%
-// is 500.
-//
-// Rounding is half-up and happens in exactly one place: applyRate, when a
-// percentage becomes an amount. Everything after that is adding whole numbers,
-// so nothing gets rounded twice.
+// Whole cents and whole basis points, so no decimal is ever stored or summed.
+// applyRate is the only thing that rounds, so nothing rounds twice.
 
 export type Currency = "USD";
 
@@ -25,9 +20,8 @@ export class MoneyError extends Error {
   }
 };
 
-// Rounds half away from zero, using whole numbers throughout.
-// Math.round(a / b) would be wrong twice over: it adds floating point error,
-// and it rounds .5 upwards, which treats a refund differently from a charge.
+// Math.round would add float error and round .5 up, treating a refund
+// differently from a charge.
 export const divideRoundHalfUp = (numerator: number, denominator: number): number => {
   if (!Number.isInteger(numerator) || !Number.isInteger(denominator)) {
     throw new MoneyError("divideRoundHalfUp expects integer operands");
@@ -66,12 +60,12 @@ export class Money {
     const text = typeof value === "number" ? value.toString() : value.trim();
     if (!MAJOR_UNIT_PATTERN.test(text)) {
       throw new MoneyError(`Cannot parse "${value}" as a currency amount`);
-    };
+    }
     const negative = text.startsWith("-");
     const [whole, fraction = ""] = (negative ? text.slice(1) : text).split(".");
     if (fraction.length > 2) {
       throw new MoneyError(`Amount "${value}" has more precision than ${currency} supports (2 decimal places)`);
-    };
+    }
     const padded = fraction.padEnd(2, "0");
     const minorUnits = Number(whole) * MINOR_UNITS_PER_UNIT + Number(padded);
     return Money.fromMinorUnits(negative ? -minorUnits : minorUnits, currency);
@@ -174,6 +168,6 @@ export const percentToBasisPoints = (percent: number): number => {
   const basisPoints = percent * (BASIS_POINTS_PER_UNIT / 100);
   if (!Number.isInteger(basisPoints)) {
     throw new MoneyError(`Percent ${percent} is more precise than one basis point`);
-  };
+  }
   return basisPoints;
 };

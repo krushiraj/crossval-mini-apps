@@ -14,7 +14,7 @@ const LoginPage = async ({
 
   if (user) {
     redirect(destination);
-  };
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">

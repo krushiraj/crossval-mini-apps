@@ -1,7 +1,5 @@
-// The calculation modules throw these too, so a rule like "a fixed discount
-// can't be bigger than the line" lives with the rule rather than in whichever
-// route happens to call it. The API turns any of these into the same response
-// shape and never lets anything else reach the browser.
+// The calc modules throw these too, so each rule lives with the code that owns
+// it rather than in whichever route calls it.
 
 export type ErrorDetails = Record<string, unknown>;
 

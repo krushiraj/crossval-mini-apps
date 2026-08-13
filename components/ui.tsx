@@ -36,9 +36,7 @@ export interface ButtonProps
   loading?: boolean;
 }
 
-// Defaults to type="button". A bare button inside a form submits it, so
-// "Add line" or "Remove" would save the form — including when someone just
-// presses Enter in a field. Buttons that do submit say so.
+// A bare button inside a form submits it, so "Add line" would save the form.
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, loading, children, disabled, type = "button", ...props }, ref) => (
     <button
@@ -234,10 +232,8 @@ export const Badge = ({
   return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
 };
 
-// w-full on its own isn't enough: inside an overflow-x-auto parent the table
-// shrinks to fit and squashes its columns, crushing any control in a cell down
-// to nothing. Tables holding inputs pass a min-w-[...] so the columns keep a
-// usable width and the wrapper scrolls instead.
+// w-full alone lets the table squash its columns instead of scrolling, so
+// tables with inputs pass a min-w-[...].
 export const Table = ({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) => {
   return (
     <div className="w-full overflow-x-auto">

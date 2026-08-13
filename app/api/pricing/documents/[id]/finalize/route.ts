@@ -21,7 +21,7 @@ export const POST = apiRoute<RouteContext>(async (_request, { params }) => {
     const existing = await loadOwnedDocument(tx, user.id, id);
     if (existing.status === "finalized") {
       throw new ConflictError("ALREADY_FINALIZED", "This document is already finalized.");
-    };
+    }
 
     const currentLines = await loadLines(tx, id);
     const lineInputs = currentLines.map(toLineItemInput);

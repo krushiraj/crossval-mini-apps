@@ -1,15 +1,5 @@
-// Colour rules for a spending variance, kept in one place so the table, the
-// month grid, the summary stat and the chart always agree.
-//
-// Variance is actual minus plan. Because these are *spending* categories,
-// the sign is backwards from the usual financial convention:
-//
-//   - Negative (spent less than planned) = under budget = green
-//   - Positive (spent more than planned) = over budget = red
-//   - Exactly on plan, or nothing logged = neutral
-//
-// If income categories are ever added, this coloring needs to depend on the
-// category type, not just the sign.
+// Spending, so the sign reads backwards: under budget (negative) is green.
+// Adding income categories would mean colouring by category, not by sign.
 
 export type VarianceTone = "default" | "positive" | "negative";
 

@@ -1,10 +1,3 @@
-// Shared helpers for the Plan vs Actual Tracker API routes.
-//
-// assertMonthUnlocked is the one guard every plan/actual write path
-// (including CSV import) must call, so "reject edits to a locked month" is
-// enforced in one place instead of being re-implemented — and potentially
-// forgotten — per route.
-
 import { and, eq } from "drizzle-orm";
 
 import { db, type DatabaseOrTransaction } from "@/lib/db";

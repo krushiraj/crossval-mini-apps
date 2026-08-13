@@ -25,16 +25,8 @@ const isUniqueConstraintError = (error: unknown): boolean => {
   return /UNIQUE constraint failed/i.test(message);
 };
 
-// This is the one place two requests at once could both look fine and
-// together take the order past its total. The check re-reads what's been paid
-// inside the transaction that inserts the payment, so the second one can't
-// start until the first has committed and always sees it.
-//
-// An Idempotency-Key header means a client that timed out and retried gets
-// the original payment back instead of paying twice.
-//
-// A rejected payment still writes an audit row, in its own transaction since
-// the first one rolled back. Someone trying to overpay is worth knowing about.
+// The balance check must run inside the insert's transaction, or two payments
+// at once could both look affordable.
 export const POST = apiRoute(async (request, { params }: RouteContext) => {
   const user = await requireUser();
   const { id } = await params;
@@ -61,7 +53,7 @@ export const POST = apiRoute(async (request, { params }: RouteContext) => {
         summary: summarizeOrder(order, paymentRows),
       });
     }
-  };
+  }
 
   try {
     const { inserted, allPayments } = await db.transaction(async (tx) => {

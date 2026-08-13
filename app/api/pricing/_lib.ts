@@ -1,9 +1,3 @@
-// Shared helpers for the pricing route handlers.
-//
-// Every write path funnels through assertDraft, so there's exactly one
-// place that decides a finalized document is immutable — routes never
-// repeat that check inline.
-
 import { and, asc, eq } from "drizzle-orm";
 
 import { computeDocument } from "@/lib/calc/pricing";
@@ -64,10 +58,8 @@ export const toLineItemInput = (row: PricingLineItemRow): LineItemInput => {
   };
 };
 
-// Recomputes and persists both the line rows and the document's totals from
-// a full line set. Deletes and re-inserts every line rather than diffing,
-// so PUT .../lines (a full replace) and single-line CRUD (reload the set,
-// apply one change, call this) share one code path instead of two.
+// Deletes and re-inserts every line rather than diffing, so full replace
+// and single-line CRUD can share this one code path.
 export const replaceLinesAndRecompute = async (
   tx: DatabaseOrTransaction,
   documentId: string,
@@ -95,7 +87,7 @@ export const replaceLinesAndRecompute = async (
         totalMinorUnits: computation.lines[index].totalMinorUnits,
       })),
     );
-  };
+  }
 
   await tx
     .update(schema.pricingDocuments)

@@ -54,9 +54,8 @@ interface DraftLine {
 }
 
 
-// Shows the total as you type, using the same computeOrderTotal the API uses.
-// The server still works it out again on save. Any line that isn't a valid
-// amount makes the whole preview "—" rather than a misleading part-total.
+// Same computeOrderTotal the API uses, so the preview can't disagree with
+// what gets saved. The server still recomputes on save.
 const previewOrderTotal = (drafts: DraftLine[]): number | null => {
   const unitPrices = drafts.map((line) => parseAmountToMinorUnits(line.unitPrice));
   if (unitPrices.some((price) => price === null)) return null;
@@ -89,7 +88,6 @@ const OrderDetailPage = () => {
     queryClient.invalidateQueries({ queryKey: ["orders"] });
   };
 
-  // --- Customer / due date editing (always allowed) -----------------------
   const [editingDetails, setEditingDetails] = React.useState(false);
   const [customerDraft, setCustomerDraft] = React.useState("");
   const [dueDateDraft, setDueDateDraft] = React.useState("");
@@ -118,7 +116,6 @@ const OrderDetailPage = () => {
     },
   });
 
-  // --- Line item editing (blocked once a payment exists) ------------------
   const [editingLines, setEditingLines] = React.useState(false);
   const [lineDrafts, setLineDrafts] = React.useState<DraftLine[]>([]);
   const [lineErrors, setLineErrors] = React.useState<Record<string, string>>({});
@@ -160,7 +157,6 @@ const OrderDetailPage = () => {
     },
   });
 
-  // --- Payments -------------------------------------------------------------
   const [amountInput, setAmountInput] = React.useState("");
   const [paidDate, setPaidDate] = React.useState(todayIsoDate());
   const [note, setNote] = React.useState("");
@@ -206,7 +202,6 @@ const OrderDetailPage = () => {
     recordPaymentMutation.mutate();
   };
 
-  // --- Delete -----------------------------------------------------------
   const deleteMutation = useMutation({
     mutationFn: () => deleteOrder(orderId),
     onSuccess: () => {

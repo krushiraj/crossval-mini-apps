@@ -1,9 +1,5 @@
-// A few rules hold across every table here:
-//   - money is a whole number of cents, never a decimal
-//   - percentages are basis points, so 5% is 500
-//   - dates someone picks are "YYYY-MM-DD" text, because they're days rather
-//     than moments and shouldn't carry a timezone
-//   - anything a user owns has a userId, and every query filters on it
+// Money in whole cents, percentages in basis points, picked dates as
+// "YYYY-MM-DD" text, and a userId on anything a user owns.
 
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -72,9 +68,7 @@ export const verification = sqliteTable("verification", {
 
 // Audit trail, shared by all three apps
 
-// Append-only record of who changed what. Rows are written in the same
-// transaction as the change they describe, so the trail can never be missing
-// an entry for a change that did happen.
+// Written in the same transaction as the change, so the trail can't miss one.
 export const auditLog = sqliteTable(
   "audit_log",
   {
@@ -113,9 +107,7 @@ export const pricingDocuments = sqliteTable(
     issueDate: text("issue_date").notNull(),
     // "draft" | "finalized"
     status: text("status").notNull().default("draft"),
-    // Totals are worked out by the server on every write and frozen when the
-    // document is finalized. Storing them keeps the date-range report a simple
-    // sum instead of recalculating every line of every document.
+    // Stored so the date-range report is a simple sum. Frozen at finalize.
     subtotalMinorUnits: integer("subtotal_minor_units").notNull().default(0),
     totalDiscountMinorUnits: integer("total_discount_minor_units").notNull().default(0),
     totalTaxMinorUnits: integer("total_tax_minor_units").notNull().default(0),
@@ -196,9 +188,7 @@ export const orderLineItems = sqliteTable(
   (table) => [index("order_line_items_order_idx").on(table.orderId, table.position)],
 );
 
-// Payments are only ever added, never changed or deleted. The amount paid is
-// the sum of these rows, so there's no stored balance to fall out of step. A
-// correction is another row, not an edit.
+// Append-only. A correction is another row, not an edit.
 export const payments = sqliteTable(
   "payments",
   {

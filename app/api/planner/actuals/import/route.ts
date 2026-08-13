@@ -9,14 +9,8 @@ import type { CsvRowError } from "@/lib/calc/planner";
 import { parseActualsCsv } from "@/lib/calc/planner";
 import { importActualsSchema } from "@/lib/validation/planner";
 
-// CSV import for actuals. The client sends raw CSV text — parsing and
-// validation happen entirely on the server, since it's the source of truth
-// for the category names and lock state the rows are checked against.
-//
 // All-or-nothing: parse errors and locked-month rows are collected as
-// per-row errors instead of one blanket 409, and if there are any, nothing
-// gets written. A valid import inserts one row per line plus one audit
-// entry, all in a single transaction.
+// per-row errors, and if any exist, nothing gets written.
 export const POST = apiRoute(async (request) => {
   const user = await requireUser();
   const body = validate(importActualsSchema, await readJson(request));
@@ -47,7 +41,7 @@ export const POST = apiRoute(async (request) => {
       `The CSV had ${allErrors.length} invalid row${allErrors.length === 1 ? "" : "s"}. Nothing was imported.`,
       { rows: allErrors },
     );
-  };
+  }
 
   return await db.transaction(async (tx) => {
     for (const row of parsed.rows) {

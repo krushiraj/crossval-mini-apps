@@ -15,7 +15,7 @@ export const GET = apiRoute(async (request) => {
   const conditions = [eq(actuals.userId, user.id), gte(actuals.month, query.from), lte(actuals.month, query.to)];
   if (query.categoryId) {
     conditions.push(eq(actuals.categoryId, query.categoryId));
-  };
+  }
 
   const rows = await db
     .select()
