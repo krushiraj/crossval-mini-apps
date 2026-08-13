@@ -120,6 +120,36 @@ describe("validation: documents", () => {
     expect(result.error?.issues[0]?.message).toBe("Title is required.");
   });
 
+  // Nothing capped these once, so a single request could store a megabyte.
+  it("rejects an over-long title in the app's own words", () => {
+    const result = createDocumentSchema.safeParse({
+      title: "x".repeat(201),
+      customer: "Acme",
+      issueDate: "2026-01-15",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("Title must be 200 characters or fewer.");
+  });
+
+  it("rejects an over-long customer, on update as well as create", () => {
+    const long = "x".repeat(201);
+    expect(
+      createDocumentSchema.safeParse({ title: "Quote", customer: long, issueDate: "2026-01-15" }).success,
+    ).toBe(false);
+    const update = updateDocumentSchema.safeParse({ customer: long });
+    expect(update.success).toBe(false);
+    expect(update.error?.issues[0]?.message).toBe("Customer must be 200 characters or fewer.");
+  });
+
+  it("accepts a title of exactly 200 characters", () => {
+    const result = createDocumentSchema.safeParse({
+      title: "x".repeat(200),
+      customer: "Acme",
+      issueDate: "2026-01-15",
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects a malformed issue date", () => {
     const result = createDocumentSchema.safeParse({ title: "Quote", customer: "Acme", issueDate: "01/15/2026" });
     expect(result.success).toBe(false);

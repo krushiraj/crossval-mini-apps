@@ -13,7 +13,11 @@ const isoDate = z
 // No defaults: with them, .partial() would make even an empty patch look
 // non-empty after parsing.
 const lineItemFields = {
-  description: z.string().trim().min(1, "Description is required.").max(500),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required.")
+    .max(500, "Description must be 500 characters or fewer."),
   quantity: z
     .number()
     .int("Quantity must be a whole number.")
@@ -42,9 +46,16 @@ export const lineItemSchema = lineItemBase.extend({
 
 export type LineItemPayload = z.infer<typeof lineItemSchema>;
 
+const title = z.string().trim().min(1, "Title is required.").max(200, "Title must be 200 characters or fewer.");
+const customer = z
+  .string()
+  .trim()
+  .min(1, "Customer is required.")
+  .max(200, "Customer must be 200 characters or fewer.");
+
 export const createDocumentSchema = z.object({
-  title: z.string().trim().min(1, "Title is required.").max(200),
-  customer: z.string().trim().min(1, "Customer is required.").max(200),
+  title,
+  customer,
   issueDate: isoDate,
   lines: z.array(lineItemSchema).default([]),
 });
@@ -53,8 +64,8 @@ export type CreateDocumentPayload = z.infer<typeof createDocumentSchema>;
 
 export const updateDocumentSchema = z
   .object({
-    title: z.string().trim().min(1, "Title is required.").max(200).optional(),
-    customer: z.string().trim().min(1, "Customer is required.").max(200).optional(),
+    title: title.optional(),
+    customer: customer.optional(),
     issueDate: isoDate.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
