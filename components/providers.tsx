@@ -12,8 +12,8 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
           queries: {
             staleTime: 10_000,
             refetchOnWindowFocus: false,
-            // Validation and business-rule failures are final; retrying them
-            // only delays the toast the user needs to see.
+            // A rejected payment or a locked month won't succeed on a retry.
+            // Retrying just delays the message telling them why.
             retry: false,
           },
         },

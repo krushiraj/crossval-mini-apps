@@ -1,9 +1,7 @@
-// Error types shared by the calculation modules and the API layer.
-//
-// Calculation modules stay free of HTTP concerns but do carry a machine
-// readable `code` and a human readable, actionable `message`; the API layer
-// turns any AppError into the standard error envelope and never leaks
-// anything else to the client.
+// The calculation modules throw these too, so a rule like "a fixed discount
+// can't be bigger than the line" lives with the rule rather than in whichever
+// route happens to call it. The API turns any of these into the same response
+// shape and never lets anything else reach the browser.
 
 export type ErrorDetails = Record<string, unknown>;
 
@@ -29,7 +27,6 @@ export class AppError extends Error {
   }
 }
 
-// Input the caller can fix by sending different values.
 export class ValidationError extends AppError {
   constructor(code: string, message: string, details?: ErrorDetails) {
     super(400, code, message, details);
@@ -42,15 +39,15 @@ export class UnauthorizedError extends AppError {
   }
 }
 
-// Used both for genuinely missing rows and for rows owned by another user, so
-// the API never reveals whether someone else's record exists.
+// Also used when the row belongs to someone else. A 403 would confirm it
+// exists, which tells them something about another account.
 export class NotFoundError extends AppError {
   constructor(message = "Not found.") {
     super(404, "NOT_FOUND", message);
   }
 }
 
-// The request was well formed but a business rule forbids it.
+// The request was fine, but a rule says no.
 export class ConflictError extends AppError {
   constructor(code: string, message: string, details?: ErrorDetails) {
     super(409, code, message, details);

@@ -5,9 +5,8 @@ export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
 };
 
-// Parses a user-entered amount ("1,234.56") into integer minor units.
-// Returns null when the text is not a valid amount, so callers can show a
-// field-level message instead of silently sending NaN to the server.
+// Returns null rather than NaN when the text isn't an amount, so a typo shows
+// a field error instead of quietly becoming zero.
 export const parseAmountToMinorUnits = (input: string): number | null => {
   const cleaned = input.replace(/[,\s$]/g, "");
   if (!/^-?\d+(\.\d{1,2})?$/.test(cleaned)) return null;
@@ -17,7 +16,6 @@ export const parseAmountToMinorUnits = (input: string): number | null => {
   return negative ? -minorUnits : minorUnits;
 };
 
-// Renders integer minor units as "$1,234.56".
 export const formatMoney = (minorUnits: number): string => {
   const negative = minorUnits < 0;
   const absolute = Math.abs(minorUnits);
@@ -27,7 +25,6 @@ export const formatMoney = (minorUnits: number): string => {
   return `${negative ? "-" : ""}$${grouped}.${fraction.toString().padStart(2, "0")}`;
 };
 
-// Renders minor units as a plain editable string ("1234.56") for form inputs.
 export const minorUnitsToInput = (minorUnits: number): string => {
   return (minorUnits / 100).toFixed(2);
 };

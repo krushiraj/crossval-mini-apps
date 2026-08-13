@@ -1,23 +1,17 @@
-// Money handling utils.
+// Every amount here is a whole number of cents, so no decimal ever reaches the
+// database or takes part in a sum. Percentages are whole basis points, so 5%
+// is 500.
 //
-// Representation: integer minor units (cents). No floating point value ever
-// reaches the database or takes part in arithmetic.
-//
-// Rates (discount percent, tax percent) are integer basis points:
-// 100% = 10_000 bp, so 5% = 500 bp and 12.5% = 1250 bp.
-//
-// Rounding policy: HALF-UP (ties away from zero), applied per line at the
-// moment a rate is turned into an amount. Sums of already-rounded line amounts
-// are exact integer additions, so document totals never round twice.
+// Rounding is half-up and happens in exactly one place: applyRate, when a
+// percentage becomes an amount. Everything after that is adding whole numbers,
+// so nothing gets rounded twice.
 
 export type Currency = "USD";
 
 export const DEFAULT_CURRENCY: Currency = "USD";
 
-// 100% expressed in basis points.
 export const BASIS_POINTS_PER_UNIT = 10_000;
 
-// Minor units per major unit (cents per dollar).
 export const MINOR_UNITS_PER_UNIT = 100;
 
 export class MoneyError extends Error {
@@ -27,12 +21,9 @@ export class MoneyError extends Error {
   }
 };
 
-// Divides two integers and rounds the result to the nearest integer with ties
-// going away from zero (HALF_UP in the BigDecimal sense).
-//
-// Kept as integer arithmetic on purpose: `Math.round(a / b)` would introduce
-// binary floating point error and rounds ties towards +Infinity, which is
-// asymmetric for negative amounts such as refunds.
+// Rounds half away from zero, using whole numbers throughout.
+// Math.round(a / b) would be wrong twice over: it adds floating point error,
+// and it rounds .5 upwards, which treats a refund differently from a charge.
 export const divideRoundHalfUp = (numerator: number, denominator: number): number => {
   if (!Number.isInteger(numerator) || !Number.isInteger(denominator)) {
     throw new MoneyError("divideRoundHalfUp expects integer operands");
@@ -51,8 +42,7 @@ export const divideRoundHalfUp = (numerator: number, denominator: number): numbe
 
 const MAJOR_UNIT_PATTERN = /^-?\d+(\.\d+)?$/;
 
-// A currency amount. Immutable; arithmetic returns new instances and is only
-// defined between amounts of the same currency.
+// Amounts can only be combined with amounts in the same currency.
 export class Money {
   private constructor(
     readonly minorUnits: number,
@@ -66,8 +56,8 @@ export class Money {
     return new Money(minorUnits, currency);
   }
 
-  // Parses a major-unit amount ("1234.56" or 1234.56) into minor units.
-  // Strings are parsed digit-by-digit so no float ever holds the value.
+  // Splits on the dot and reads each side as a whole number, so "1234.56"
+  // never exists as 1234.56 in memory.
   static fromMajorUnits(value: string | number, currency: Currency = DEFAULT_CURRENCY): Money {
     const text = typeof value === "number" ? value.toString() : value.trim();
     if (!MAJOR_UNIT_PATTERN.test(text)) {
@@ -107,7 +97,6 @@ export class Money {
     return Money.fromMinorUnits(this.minorUnits - other.minorUnits, this.currency);
   }
 
-  // Multiplies by a whole number of units (a line quantity). Exact, no rounding.
   timesQuantity(quantity: number): Money {
     if (!Number.isInteger(quantity)) {
       throw new MoneyError(`Quantity must be a whole number, received ${quantity}`);
@@ -115,9 +104,8 @@ export class Money {
     return Money.fromMinorUnits(this.minorUnits * quantity, this.currency);
   }
 
-  // Returns the portion of this amount described by a rate in basis points,
-  // rounded half-up to the nearest minor unit. This is the only place in the
-  // codebase where a rate becomes an amount.
+  // The only place a percentage turns into an amount, and so the only place
+  // anything is rounded.
   applyRate(basisPoints: number): Money {
     if (!Number.isInteger(basisPoints)) {
       throw new MoneyError(`Rate must be an integer number of basis points, received ${basisPoints}`);
@@ -150,7 +138,7 @@ export class Money {
     return this.minorUnits < other.minorUnits;
   }
 
-  // Display only — never feed this back into arithmetic.
+  // For display. Don't calculate with the result.
   toMajorUnits(): number {
     return this.minorUnits / MINOR_UNITS_PER_UNIT;
   }
@@ -169,17 +157,15 @@ export class Money {
   }
 };
 
-// Formats a raw minor-unit integer for display without constructing a Money.
 export const formatMinorUnits = (minorUnits: number, currency: Currency = DEFAULT_CURRENCY): string => {
   return Money.fromMinorUnits(minorUnits, currency).format();
 };
 
-// Converts basis points to a human percentage number (500 -> 5).
 export const basisPointsToPercent = (basisPoints: number): number => {
   return basisPoints / (BASIS_POINTS_PER_UNIT / 100);
 };
 
-// Converts a human percentage to basis points (5 -> 500), rejecting sub-bp precision.
+// Rejects anything finer than a basis point.
 export const percentToBasisPoints = (percent: number): number => {
   const basisPoints = percent * (BASIS_POINTS_PER_UNIT / 100);
   if (!Number.isInteger(basisPoints)) {

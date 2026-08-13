@@ -3,9 +3,9 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import * as schema from "./schema";
 
-// Local development falls back to an on-disk SQLite file so the app runs with
-// no cloud credentials. Production points at Turso (hosted libSQL), which
-// speaks the same protocol — the only difference is the URL and auth token.
+// With nothing set this uses a local file, so the app runs without a cloud
+// account. Production points the same variable at Turso. Same client either
+// way, so local and deployed can't behave differently.
 const url = process.env.TURSO_DATABASE_URL ?? "file:./local.db";
 const authToken = process.env.TURSO_AUTH_TOKEN;
 
@@ -15,7 +15,6 @@ export const db = drizzle(libsql, { schema });
 
 export type Database = typeof db;
 
-// A drizzle handle that may be either the pooled db or an open transaction.
 export type DatabaseOrTransaction = Database | Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 export { schema };

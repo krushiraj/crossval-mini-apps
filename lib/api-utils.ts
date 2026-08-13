@@ -1,12 +1,9 @@
-// The contract every API route in this project follows:
+// Every route follows the same order: check who's asking, check the input,
+// load the row and confirm it's theirs, check the rule, then write the change
+// and its audit entry together. Routes don't invent their own order.
 //
-//   auth -> validate -> load + ownership check -> business-rule guard ->
-//   transaction (write + audit) -> return server-computed state
-//
-// Handlers throw `AppError` subclasses; `apiRoute` turns them into the single
-// error envelope used across all three apps:
-//
-//   { "error": { "code": "...", "message": "...", "details": { ... } } }
+// Handlers just throw. apiRoute catches and turns it into the one response
+// shape the browser knows how to read.
 
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -28,7 +25,6 @@ export interface AuthenticatedUser {
   name: string;
 }
 
-// Resolves the signed-in user or throws 401. Every mutating route calls this first.
 export const requireUser = async (): Promise<AuthenticatedUser> => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
@@ -41,8 +37,8 @@ export const requireUser = async (): Promise<AuthenticatedUser> => {
   };
 };
 
-// Validates input against a Zod schema and reports every failing field at once
-// so the client can highlight all of them rather than one per round trip.
+// Reports every bad field at once, so the form can mark them all instead of
+// making the user fix one per attempt.
 export const validate = <T>(schema: ZodType<T>, data: unknown): T => {
   const result = schema.safeParse(data);
   if (result.success) {
@@ -79,7 +75,7 @@ export const readJson = async (request: Request): Promise<unknown> => {
   }
 };
 
-// Optional client-supplied key that makes a create request safe to retry.
+// Lets a client retry safely after a timeout without paying twice.
 export const idempotencyKeyFrom = (request: Request): string | null => {
   const key = request.headers.get("Idempotency-Key");
   return key && key.trim().length > 0 ? key.trim() : null;
@@ -118,7 +114,6 @@ export const toErrorResponse = (error: unknown): NextResponse => {
 
 type RouteHandler<Context> = (request: Request, context: Context) => Promise<Response>;
 
-// Wraps a route handler so every thrown AppError becomes the standard envelope.
 export const apiRoute = <Context>(handler: RouteHandler<Context>): RouteHandler<Context> => {
   return async (request, context) => {
     try {
@@ -138,8 +133,9 @@ export interface AuditEntry {
   detail?: Record<string, unknown>;
 }
 
-// Appends to the audit trail. Always call this with the *transaction* handle of
-// the mutation being recorded, so the trail cannot drift from the data.
+// Takes the transaction, not the database, on purpose: the audit row commits
+// with the change it describes, so there's no way to end up with one and not
+// the other.
 export const recordAudit = async (
   tx: DatabaseOrTransaction,
   entry: AuditEntry,

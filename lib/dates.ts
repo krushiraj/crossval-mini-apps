@@ -1,8 +1,6 @@
-// Calendar-date helpers.
-//
-// Due dates, issue dates and payment dates are calendar dates, not instants.
-// They are stored and compared as "YYYY-MM-DD" strings, which sort
-// lexicographically in chronological order and carry no timezone.
+// Due dates and issue dates are days, not moments in time, so they're kept as
+// "YYYY-MM-DD" text. That sorts correctly as a string and has no timezone to
+// get wrong.
 
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const ISO_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -20,17 +18,15 @@ export const isIsoMonth = (value: string): boolean => {
   return ISO_MONTH_PATTERN.test(value);
 };
 
-// Today in UTC as "YYYY-MM-DD".
 export const todayIsoDate = (): string => {
   return new Date().toISOString().slice(0, 10);
 };
 
-// The month a calendar date belongs to: "2026-01-15" -> "2026-01".
 export const monthOf = (isoDate: string): string => {
   return isoDate.slice(0, 7);
 };
 
-// Inclusive list of months between two "YYYY-MM" bounds.
+// Includes both ends.
 export const monthsBetween = (fromMonth: string, toMonth: string): string[] => {
   const months: string[] = [];
   let [year, month] = fromMonth.split("-").map(Number);
@@ -47,7 +43,6 @@ export const monthsBetween = (fromMonth: string, toMonth: string): string[] => {
   return months;
 };
 
-// Formats "2026-01" as "Jan 2026".
 export const formatMonth = (month: string): string => {
   const [year, monthNumber] = month.split("-").map(Number);
   const name = new Date(Date.UTC(year, monthNumber - 1, 1)).toLocaleString("en-US", {
@@ -57,7 +52,6 @@ export const formatMonth = (month: string): string => {
   return `${name} ${year}`;
 };
 
-// Formats "2026-01-15" as "15 Jan 2026".
 export const formatIsoDate = (isoDate: string): string => {
   const [year, month, day] = isoDate.split("-").map(Number);
   const name = new Date(Date.UTC(year, month - 1, day)).toLocaleString("en-US", {

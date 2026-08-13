@@ -1,8 +1,7 @@
 "use client";
 
-// Browser-side API client. Parses the shared error envelope so callers get a
-// typed `ApiError` with the server's actionable message and, for validation
-// failures, per-field messages that forms can render inline.
+// Turns the server's error response back into a thrown ApiError, so a form can
+// show the message against the right field instead of a generic failure.
 
 export interface ApiErrorEnvelope {
   error: {
@@ -23,7 +22,6 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 
-  // Field-level messages from a 400, keyed by form field path.
   get fieldErrors(): Record<string, string> | undefined {
     const fields = this.details?.fields;
     return fields && typeof fields === "object" ? (fields as Record<string, string>) : undefined;
@@ -69,7 +67,6 @@ export const api = {
   delete: <T>(path: string) => apiFetch<T>(path, { method: "DELETE" }),
 };
 
-// A key that makes a create request safe to retry after a network failure.
 export const newIdempotencyKey = (): string => {
   return crypto.randomUUID();
 };

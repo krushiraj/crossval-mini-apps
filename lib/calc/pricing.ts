@@ -1,13 +1,9 @@
-// Multi-Rate Pricing Calculator — the single source of truth for document math.
+// Discount comes off first, then tax is worked out on what's left. Getting
+// that order the wrong way round changes the answer, which is why the brief
+// spells it out.
 //
-// Order of operations per line, as required by the spec:
-//   1. subtotal  = quantity x unit price                  (exact integer)
-//   2. discount  = percent of subtotal, or a fixed amount  (rounded half-up)
-//   3. tax       = tax percent of the DISCOUNTED amount   (rounded half-up)
-//   4. total     = discounted amount + tax
-//
-// Document totals are sums of already-rounded line amounts, so they are exact
-// and always reconcile: grand total === subtotal - discount + tax.
+// Document totals just add up the rounded line amounts, so subtotal minus
+// discount plus tax always equals the grand total.
 
 import { ValidationError } from "@/lib/errors";
 import { BASIS_POINTS_PER_UNIT, Money } from "@/lib/money";
@@ -16,15 +12,11 @@ export type DiscountType = "percent" | "fixed";
 
 export interface LineItemInput {
   description?: string;
-  // Whole units, at least 1.
   quantity: number;
-  // Price per unit in minor units, at least 0.
   unitPriceMinorUnits: number;
-  // `null` when the line has no discount.
   discountType: DiscountType | null;
-  // Basis points when `discountType` is "percent", minor units when "fixed", 0 when null.
+  // Basis points for a percent, cents for a fixed amount.
   discountValue: number;
-  // Tax rate in basis points applied to the discounted amount. 0 for untaxed lines.
   taxRateBasisPoints: number;
 }
 
@@ -110,13 +102,11 @@ const assertLineIsValid = (line: LineItemInput, index: number): void => {
   }
 };
 
-// Computes one line. A line carries either a percent discount or a fixed
-// discount, never both — the data model makes that unrepresentable by storing
-// a single `discountType` alongside a single `discountValue`.
+// One discount type per line, never both — there's only one field for it, so
+// that can't be got wrong.
 //
-// A fixed discount larger than the line subtotal is rejected rather than
-// clamped, so a mistyped discount surfaces as an error instead of silently
-// becoming "this line is free".
+// A fixed discount bigger than the line is rejected, not trimmed to fit.
+// Trimming would turn a typo into a free line and nobody would notice.
 export const computeLine = (line: LineItemInput, index = 0): LineTotals => {
   assertLineIsValid(line, index);
 
@@ -149,7 +139,6 @@ export const computeLine = (line: LineItemInput, index = 0): LineTotals => {
   };
 };
 
-// Computes every line and the document totals derived from them.
 export const computeDocument = (lines: LineItemInput[]): DocumentComputation => {
   const computed = lines.map((line, index) => computeLine(line, index));
 
@@ -171,8 +160,8 @@ export const computeDocument = (lines: LineItemInput[]): DocumentComputation => 
   return { ...totals, lines: computed };
 };
 
-// Extra checks applied only when a draft is finalized. Empty documents and
-// zero-value lines are acceptable while drafting but not worth freezing.
+// Only checked at finalize. An empty document is fine to leave lying around as
+// a draft, just not to freeze.
 export const assertDocumentCanBeFinalized = (lines: LineItemInput[]): void => {
   if (lines.length === 0) {
     throw new ValidationError(

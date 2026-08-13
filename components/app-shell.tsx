@@ -14,8 +14,6 @@ export interface NavItem {
   label: string;
 }
 
-// Chrome shared by the three apps: product switcher, in-app navigation and the
-// signed-in user's session controls.
 export const AppShell = ({
   appName,
   appHref,
@@ -91,7 +89,6 @@ export const AppShell = ({
   );
 };
 
-// Page title row used at the top of each screen.
 export const PageHeader = ({
   title,
   description,

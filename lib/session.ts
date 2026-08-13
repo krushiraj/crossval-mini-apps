@@ -19,7 +19,8 @@ export const getSessionUser = async (): Promise<SessionUser | null> => {
   };
 };
 
-// Server-side page guard: sends signed-out visitors to the login screen.
+// Runs before the page renders, so a protected page never flashes up and
+// then disappears.
 export const requirePageUser = async (returnTo?: string): Promise<SessionUser> => {
   const user = await getSessionUser();
   if (!user) {

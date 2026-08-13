@@ -1,18 +1,13 @@
 "use client";
 
-// Small shared UI kit used by all three apps. Kept in one file on purpose:
-// the components are thin wrappers over Tailwind classes and having a single
-// import surface (`@/components/ui`) keeps the app code uncluttered.
+// One file on purpose. These are thin wrappers around Tailwind classes, and a
+// single import keeps the app code shorter.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-
-// --------------------------------------------------------------------------
-// Button
-// --------------------------------------------------------------------------
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -55,10 +50,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ),
 );
 Button.displayName = "Button";
-
-// --------------------------------------------------------------------------
-// Form fields
-// --------------------------------------------------------------------------
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => (
@@ -115,7 +106,6 @@ export const Label = ({ className, ...props }: React.LabelHTMLAttributes<HTMLLab
   );
 };
 
-// Label + control + inline error message, the standard form row.
 export const Field = ({
   label,
   error,
@@ -141,10 +131,6 @@ export const Field = ({
     </div>
   );
 };
-
-// --------------------------------------------------------------------------
-// Surfaces
-// --------------------------------------------------------------------------
 
 export const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
   return (
@@ -186,7 +172,6 @@ export const CardBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivEl
   return <div className={cn("px-5 py-4", className)} {...props} />;
 };
 
-// Headline number used on dashboards and reports.
 export const Stat = ({
   label,
   value,
@@ -213,10 +198,6 @@ export const Stat = ({
   );
 };
 
-// --------------------------------------------------------------------------
-// Badge
-// --------------------------------------------------------------------------
-
 const badgeVariants = cva(
   "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
   {
@@ -240,10 +221,6 @@ export const Badge = ({
 }: React.HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>) => {
   return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
 };
-
-// --------------------------------------------------------------------------
-// Table
-// --------------------------------------------------------------------------
 
 export const Table = ({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) => {
   return (
@@ -270,10 +247,6 @@ export const Td = ({ className, ...props }: React.TdHTMLAttributes<HTMLTableCell
     <td className={cn("border-b border-slate-100 px-3 py-2 text-slate-800", className)} {...props} />
   );
 };
-
-// --------------------------------------------------------------------------
-// States
-// --------------------------------------------------------------------------
 
 export const EmptyState = ({
   title,
