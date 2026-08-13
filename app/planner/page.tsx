@@ -122,6 +122,7 @@ const PlannerPage = () => {
 
       {isLocked ? (
         <div
+          role="status"
           className="mb-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800"
         >
           <Lock className="h-4 w-4 shrink-0" />
@@ -290,6 +291,23 @@ const CategoryRow = ({
     onError: (error: unknown) => toast.error(error instanceof Error ? error.message : "Could not delete the entry."),
   });
 
+  const revertPlan = () => {
+    setPlanInput(planMinorUnits !== null ? minorUnitsToInput(planMinorUnits) : "");
+    setPlanError(undefined);
+  };
+
+  // A form per row can't work here — the actuals and variance live in sibling
+  // cells — so Enter and Escape are handled on the input itself.
+  const handlePlanKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      savePlan();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      revertPlan();
+    }
+  };
+
   const savePlan = () => {
     const amount = parseAmountToMinorUnits(planInput);
     if (amount === null || amount < 0) {
@@ -328,6 +346,7 @@ const CategoryRow = ({
             value={planInput}
             onChange={(event) => setPlanInput(event.target.value)}
             onBlur={savePlan}
+            onKeyDown={handlePlanKeyDown}
             disabled={isLocked || upsertPlanMutation.isPending}
             placeholder="0.00"
             inputMode="decimal"
@@ -533,6 +552,7 @@ const CsvImportPanel = ({ onImported }: { onImported: () => void }) => {
         >
           <Textarea
             rows={6}
+            aria-label="CSV data"
             value={csv}
             onChange={(event) => setCsv(event.target.value)}
             placeholder={"month,category,amount\n2026-01,Marketing,4800"}

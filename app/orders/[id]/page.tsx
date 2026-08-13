@@ -333,6 +333,7 @@ const OrderDetailPage = () => {
                     error={lineErrors[`lines.${index}.description`]}
                   >
                     <Input
+                      aria-label={index === 0 ? undefined : `Line ${index + 1} description`}
                       value={line.description}
                       onChange={(event) =>
                         setLineDrafts((current) =>
@@ -352,6 +353,7 @@ const OrderDetailPage = () => {
                       type="number"
                       min={1}
                       step={1}
+                      aria-label={index === 0 ? undefined : `Line ${index + 1} quantity`}
                       value={line.quantity}
                       onChange={(event) =>
                         setLineDrafts((current) =>
@@ -368,6 +370,7 @@ const OrderDetailPage = () => {
                     error={lineErrors[`lines.${index}.unitPriceMinorUnits`]}
                   >
                     <Input
+                      aria-label={index === 0 ? undefined : `Line ${index + 1} unit price`}
                       value={line.unitPrice}
                       onChange={(event) =>
                         setLineDrafts((current) =>

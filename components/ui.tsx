@@ -36,10 +36,14 @@ export interface ButtonProps
   loading?: boolean;
 }
 
+// Defaults to type="button". A bare button inside a form submits it, so
+// "Add line" or "Remove" would save the form — including when someone just
+// presses Enter in a field. Buttons that do submit say so.
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, loading, children, disabled, ...props }, ref) => (
+  ({ className, variant, size, loading, children, disabled, type = "button", ...props }, ref) => (
     <button
       ref={ref}
+      type={type}
       className={cn(buttonVariants({ variant, size }), className)}
       disabled={disabled || loading}
       {...props}
@@ -121,10 +125,18 @@ export const Field = ({
 }) => {
   return (
     <div className={cn("w-full", className)}>
-      {label ? <Label>{label}</Label> : null}
-      {children}
+      {label ? (
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-slate-600">{label}</span>
+          {children}
+        </label>
+      ) : (
+        children
+      )}
       {error ? (
-        <p className="mt-1 text-xs text-red-600">{error}</p>
+        <p role="alert" className="mt-1 text-xs text-red-600">
+          {error}
+        </p>
       ) : hint ? (
         <p className="mt-1 text-xs text-slate-500">{hint}</p>
       ) : null}

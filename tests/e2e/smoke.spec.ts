@@ -88,6 +88,24 @@ test.describe("pricing", () => {
     await expect(row).toContainText("$2,457.00");
   });
 
+  test("pressing Enter in a line field saves instead of leaving the page", async ({ page }) => {
+    await page.goto("/pricing");
+    await page
+      .getByRole("row", { name: /Sample document from the brief/ })
+      .getByRole("link")
+      .first()
+      .click();
+
+    await page.waitForURL(/\/pricing\/.+/);
+    const url = page.url();
+    const taxField = page.locator("tbody tr").first().getByRole("textbox").last();
+    await taxField.fill("6");
+    await taxField.press("Enter");
+
+    await expect(page.getByText(/line items saved/i)).toBeVisible();
+    expect(page.url()).toBe(url);
+  });
+
   test("a finalized document is read-only and offers duplication instead", async ({ page }) => {
     await page.goto("/pricing");
 
@@ -118,7 +136,7 @@ test.describe("orders", () => {
   test("the status filter narrows the table", async ({ page }) => {
     await page.goto("/orders");
 
-    await page.getByRole("combobox").first().selectOption("overdue");
+    await page.getByLabel("Filter by status").selectOption("overdue");
     await expect(page.getByRole("row", { name: /Blue Harbour Logistics/ })).toBeVisible();
     await expect(page.getByRole("row", { name: /Northwind Trading/ })).toHaveCount(0);
   });
@@ -130,7 +148,7 @@ test.describe("orders", () => {
     await page.getByRole("row", { name: /Acme Corp/ }).getByRole("link").first().click();
     await expect(page.getByRole("main")).toContainText("$600.00");
 
-    await page.locator('input').filter({ hasNot: page.locator('[type="date"]') }).nth(0).fill("601");
+    await page.getByLabel("Amount").fill("601");
     await page.getByRole("button", { name: /record payment/i }).click();
 
     // The server's actionable message must reach the user, not a generic failure.
@@ -141,7 +159,7 @@ test.describe("orders", () => {
     await page.goto("/orders");
 
     await page.getByRole("row", { name: /Cedar & Co/ }).getByRole("link").first().click();
-    await page.locator('input').filter({ hasNot: page.locator('[type="date"]') }).nth(0).fill("200");
+    await page.getByLabel("Amount").fill("200");
     await page.getByRole("button", { name: /record payment/i }).click();
 
     await expect(page.getByRole("main")).toContainText("Partially paid");
@@ -185,7 +203,7 @@ test.describe("planner", () => {
 
     const current = await marketingTarget.inputValue();
     await marketingTarget.fill(current.startsWith("4200") ? "4300.00" : "4200.00");
-    await marketingTarget.blur();
+    await marketingTarget.press("Enter");
 
     await expect(page.getByText(/target saved/i).first()).toBeVisible();
   });

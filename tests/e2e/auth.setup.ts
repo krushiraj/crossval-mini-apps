@@ -15,8 +15,8 @@ const DEMO_PASSWORD = "demo12345";
 
 setup("authenticate as the demo user", async ({ page }) => {
   await page.goto("/login");
-  await page.locator('input[type="email"]').fill(DEMO_EMAIL);
-  await page.locator('input[type="password"]').fill(DEMO_PASSWORD);
+  await page.getByLabel("Email").fill(DEMO_EMAIL);
+  await page.getByLabel("Password").fill(DEMO_PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page).toHaveURL("/");

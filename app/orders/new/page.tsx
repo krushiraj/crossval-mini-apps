@@ -145,6 +145,7 @@ const NewOrderPage = () => {
                   error={fieldErrors[`lines.${index}.description`]}
                 >
                   <Input
+                    aria-label={index === 0 ? undefined : `Line ${index + 1} description`}
                     value={line.description}
                     onChange={(event) => updateLine(line.key, { description: event.target.value })}
                     placeholder="Item description"
@@ -156,6 +157,7 @@ const NewOrderPage = () => {
                     type="number"
                     min={1}
                     step={1}
+                    aria-label={index === 0 ? undefined : `Line ${index + 1} quantity`}
                     value={line.quantity}
                     onChange={(event) => updateLine(line.key, { quantity: event.target.value })}
                     required
@@ -166,6 +168,7 @@ const NewOrderPage = () => {
                   error={fieldErrors[`lines.${index}.unitPriceMinorUnits`]}
                 >
                   <Input
+                    aria-label={index === 0 ? undefined : `Line ${index + 1} unit price`}
                     value={line.unitPrice}
                     onChange={(event) => updateLine(line.key, { unitPrice: event.target.value })}
                     placeholder="0.00"

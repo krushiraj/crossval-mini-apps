@@ -438,6 +438,14 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
         </CardBody>
       </Card>
 
+      {/* A real form, so Enter in any line field saves. "Add line" and
+          "Remove" are type="button" by default and never submit it. */}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSaveLines();
+        }}
+      >
       <Card className="mb-5">
         <CardHeader
           title="Line items"
@@ -447,7 +455,7 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
                 <Button variant="secondary" size="sm" onClick={addLine}>
                   Add line
                 </Button>
-                <Button size="sm" onClick={handleSaveLines} loading={linesMutation.isPending}>
+                <Button type="submit" size="sm" loading={linesMutation.isPending}>
                   Save changes
                 </Button>
               </div>
@@ -583,6 +591,7 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
           {!isDraft && document.lines.length === 0 ? <EmptyState title="No line items" /> : null}
         </CardBody>
       </Card>
+      </form>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <Stat label="Subtotal" value={formatMoney(shownTotals.subtotalMinorUnits)} />
