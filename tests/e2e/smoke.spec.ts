@@ -249,6 +249,22 @@ test.describe("orders", () => {
     await expect(page).toHaveURL(/\/orders\/new/);
   });
 
+  test("an order that comes to nothing is refused", async ({ page }) => {
+    await page.goto("/orders/new");
+    await page.getByLabel("Customer").fill("Zero total test");
+    await page.getByLabel("Due date").fill("2026-12-01");
+
+    const row = page.locator("form").first();
+    await row.getByLabel("Description").first().fill("Free sample");
+    await row.getByLabel("Quantity").first().fill("1");
+    await row.getByLabel("Unit price").first().fill("0");
+
+    await page.getByRole("button", { name: /create order/i }).click();
+
+    await expect(page.getByText(/at least \$0\.01/i).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/orders\/new/);
+  });
+
   test("an over-payment is rejected with the maximum allowed amount", async ({ page }) => {
     await page.goto("/orders");
 

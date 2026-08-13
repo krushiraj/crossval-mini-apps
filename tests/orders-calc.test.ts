@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assertOrderIsPayable,
   assertPaymentAllowed,
   computeOrderSummary,
   computeOrderTotal,
@@ -82,9 +83,34 @@ describe("computeOrderTotal", () => {
   });
 });
 
+describe("assertOrderIsPayable", () => {
+  it("refuses an order that comes to nothing", () => {
+    expect(() => assertOrderIsPayable(0)).toThrow(ValidationError);
+    try {
+      assertOrderIsPayable(0);
+    } catch (error) {
+      expect((error as ValidationError).code).toBe("ZERO_TOTAL_ORDER");
+    }
+  });
+
+  it("allows a penny", () => {
+    expect(() => assertOrderIsPayable(1)).not.toThrow();
+  });
+});
+
 describe("deriveStatus", () => {
   const TOTAL = 100_000; // $1,000
   const DUE = "2026-01-10";
+
+  // A zero total used to read as paid, because 0 >= 0.
+  it("a zero-total order is not paid, and not overdue either", () => {
+    expect(
+      deriveStatus({ totalMinorUnits: 0, paidMinorUnits: 0, dueDate: DUE, today: "2026-01-05" }),
+    ).toBe("pending");
+    expect(
+      deriveStatus({ totalMinorUnits: 0, paidMinorUnits: 0, dueDate: DUE, today: "2026-06-01" }),
+    ).toBe("pending");
+  });
 
   it("pending: no payments recorded, not past due", () => {
     expect(
@@ -159,11 +185,6 @@ describe("deriveStatus", () => {
     ).toBe("paid");
   });
 
-  it("a zero-total order is paid immediately (nothing left to collect)", () => {
-    expect(
-      deriveStatus({ totalMinorUnits: 0, paidMinorUnits: 0, dueDate: DUE, today: "2026-01-11" }),
-    ).toBe("paid");
-  });
 });
 
 describe("assertPaymentAllowed", () => {

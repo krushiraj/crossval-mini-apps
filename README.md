@@ -266,7 +266,7 @@ Status is **never stored**. `deriveStatus()` in `lib/calc/orders.ts` works it ou
 
 | Status | When |
 | --- | --- |
-| `paid` | Payments add up to the order total or more |
+| `paid` | Payments add up to the order total or more, and the total is above zero |
 | `overdue` | Not fully paid, and today is past the due date |
 | `partially_paid` | Something paid, still owing, not past due |
 | `pending` | Nothing paid, not past due |
@@ -277,6 +277,16 @@ Two orderings matter, and both are tested:
 - **Overdue beats partly paid.** Past the date and still short is `overdue`, whether nothing or nearly everything has been paid. There's no "overdue but partly paid" state. The amount still owing is shown next to it, so nothing is lost.
 
 An order due *today* isn't late yet.
+
+**An order has to come to at least $0.01.** A zero total used to read as `paid` the moment it was created, because nothing was owed and nothing had been paid, which is a misleading thing for a ledger to say about money that never moved. `assertOrderIsPayable()` now refuses to save one, on both the create and the replace-lines paths:
+
+```json
+{ "error": { "code": "ZERO_TOTAL_ORDER",
+  "message": "An order must come to at least $0.01. Check the unit prices.",
+  "details": { "field": "lines" } } }
+```
+
+The rule sits outside `computeOrderTotal()` on purpose, so the live total still previews as you type and only saving is refused. `deriveStatus()` treats a zero total as `pending` regardless, which covers any row written before the rule existed. An individual line may still be free, as long as the order isn't.
 
 ### Payments, over-payment and the ledger
 

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { serializeOrderListItem } from "@/app/api/orders/_lib";
-import { computeOrderTotal } from "@/lib/calc/orders";
+import { assertOrderIsPayable, computeOrderTotal } from "@/lib/calc/orders";
 import { apiRoute, created, newId, ok, readJson, recordAudit, requireUser, validate } from "@/lib/api-utils";
 import { todayIsoDate } from "@/lib/dates";
 import { db } from "@/lib/db";
@@ -55,6 +55,7 @@ export const POST = apiRoute(async (request) => {
   const body = validate(createOrderSchema, await readJson(request));
 
   const totals = computeOrderTotal(body.lines);
+  assertOrderIsPayable(totals.totalMinorUnits);
 
   const orderId = newId();
 

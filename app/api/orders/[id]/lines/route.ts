@@ -7,7 +7,7 @@ import {
   loadOwnedOrder,
   serializeOrderDetail,
 } from "@/app/api/orders/_lib";
-import { computeOrderTotal } from "@/lib/calc/orders";
+import { assertOrderIsPayable, computeOrderTotal } from "@/lib/calc/orders";
 import { apiRoute, newId, ok, readJson, recordAudit, requireUser, validate } from "@/lib/api-utils";
 import { db } from "@/lib/db";
 import { orderLineItems, orders } from "@/lib/db/schema";
@@ -34,6 +34,7 @@ export const PUT = apiRoute(async (request, { params }: RouteContext) => {
   }
 
   const totals = computeOrderTotal(body.lines);
+  assertOrderIsPayable(totals.totalMinorUnits);
 
   await db.transaction(async (tx) => {
     await tx.delete(orderLineItems).where(eq(orderLineItems.orderId, id));

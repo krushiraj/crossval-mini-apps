@@ -63,6 +63,17 @@ export const computeOrderTotal = (lines: OrderLineItemInput[]): OrderTotals => {
   };
 };
 
+// Not in computeOrderTotal, so the preview still shows $0.00 while typing.
+export const assertOrderIsPayable = (totalMinorUnits: number): void => {
+  if (totalMinorUnits < 1) {
+    throw new ValidationError(
+      "ZERO_TOTAL_ORDER",
+      "An order must come to at least $0.01. Check the unit prices.",
+      { field: "lines" },
+    );
+  }
+};
+
 // Paid beats overdue, overdue beats partly paid. Due today isn't late yet.
 export const deriveStatus = ({
   totalMinorUnits,
@@ -75,6 +86,10 @@ export const deriveStatus = ({
   dueDate: string;
   today: string;
 }): OrderStatus => {
+  // Nothing owed is not the same as settled.
+  if (totalMinorUnits <= 0) {
+    return "pending";
+  }
   if (paidMinorUnits >= totalMinorUnits) {
     return "paid";
   }
