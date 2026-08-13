@@ -27,6 +27,7 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import type { Actual } from "@/app/planner/_api";
 import { plannerApi, plannerKeys } from "@/app/planner/_api";
+import { varianceTextClass } from "@/app/planner/variance-tone";
 
 const currentMonth = (): string => {
   return new Date().toISOString().slice(0, 7);
@@ -231,6 +232,29 @@ const CategoryGrid = ({
             />
           ))}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-slate-200 bg-slate-50 font-semibold text-slate-900">
+            <Td className="font-semibold">Total</Td>
+            <Td className="tabular-nums">{formatMoney(totals.planMinorUnits)}</Td>
+            <Td className="tabular-nums">
+              {totals.actualMinorUnits === null ? (
+                <span className="text-slate-400">—</span>
+              ) : (
+                formatMoney(totals.actualMinorUnits)
+              )}
+            </Td>
+            <Td className={`tabular-nums ${varianceTextClass(totals.varianceMinorUnits)}`}>
+              {totals.varianceMinorUnits === null ? (
+                <span className="text-slate-400">—</span>
+              ) : (
+                <>
+                  {formatMoney(totals.varianceMinorUnits)}
+                  {totals.variancePercent !== null ? ` (${totals.variancePercent}%)` : ""}
+                </>
+              )}
+            </Td>
+          </tr>
+        </tfoot>
       </Table>
     </Card>
   );
@@ -383,7 +407,7 @@ const CategoryRow = ({
         {variance === null || variance.varianceMinorUnits === null ? (
           <span className="text-slate-400">—</span>
         ) : (
-          <span className={variance.varianceMinorUnits < 0 ? "text-red-600" : "text-amber-700"}>
+          <span className={varianceTextClass(variance.varianceMinorUnits)}>
             {formatMoney(variance.varianceMinorUnits)}
             {variance.variancePercent !== null ? ` (${variance.variancePercent}%)` : ""}
           </span>

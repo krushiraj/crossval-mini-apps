@@ -10,11 +10,7 @@ import { Button, Card, CardBody, CardHeader, EmptyState, LoadingRow, Stat, Table
 import { PageHeader } from "@/components/app-shell";
 import { plannerApi, plannerKeys } from "@/app/planner/_api";
 import { MonthlyVarianceChart } from "@/app/planner/report/variance-chart";
-
-const varianceTone = (value: number | null): string => {
-  if (value === null) return "text-slate-400";
-  return value < 0 ? "text-red-600" : "text-amber-700";
-};
+import { varianceTextClass, varianceTone } from "@/app/planner/variance-tone";
 
 const currentMonth = (): string => {
   return new Date().toISOString().slice(0, 7);
@@ -145,13 +141,7 @@ const ReportPage = () => {
                   ? "—"
                   : formatMoney(report.overallTotal.varianceMinorUnits)
               }
-              tone={
-                report.overallTotal.varianceMinorUnits === null
-                  ? "default"
-                  : report.overallTotal.varianceMinorUnits < 0
-                    ? "negative"
-                    : "positive"
-              }
+              tone={varianceTone(report.overallTotal.varianceMinorUnits)}
             />
           </div>
 
@@ -188,10 +178,10 @@ const ReportPage = () => {
                         formatMoney(row.actualMinorUnits)
                       )}
                     </Td>
-                    <Td className={`tabular-nums ${varianceTone(row.varianceMinorUnits)}`}>
+                    <Td className={`tabular-nums ${varianceTextClass(row.varianceMinorUnits)}`}>
                       {row.varianceMinorUnits === null ? "—" : formatMoney(row.varianceMinorUnits)}
                     </Td>
-                    <Td className={`tabular-nums ${varianceTone(row.variancePercent)}`}>
+                    <Td className={`tabular-nums ${varianceTextClass(row.variancePercent)}`}>
                       {row.variancePercent === null
                         ? "—"
                         : `${row.variancePercent > 0 ? "+" : ""}${row.variancePercent.toFixed(2)}%`}

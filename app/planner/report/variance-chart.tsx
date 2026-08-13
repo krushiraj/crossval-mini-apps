@@ -1,13 +1,15 @@
 "use client";
 
-// One bar per month: the sum of (actual − plan) across every category. A month
-// with no actuals still gets a bar, in grey, so a reporting gap doesn't look
-// the same as "on plan".
+// One bar per month: the sum of (actual − plan) across every category,
+// coloured like the table — green under budget, red over. A month with no
+// actuals still gets a bar, in grey, so a gap in reporting doesn't look the
+// same as being on plan.
 
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { formatMonth } from "@/lib/dates";
 import { formatMoney } from "@/lib/utils";
+import { varianceBarColor } from "@/app/planner/variance-tone";
 import type { ReportMonthTotal } from "@/lib/calc/planner";
 
 export const MonthlyVarianceChart = ({ monthTotals }: { monthTotals: ReportMonthTotal[] }) => {
@@ -41,7 +43,7 @@ export const MonthlyVarianceChart = ({ monthTotals }: { monthTotals: ReportMonth
             {data.map((entry, index) => (
               <Cell
                 key={index}
-                fill={!entry.hasData ? "#cbd5e1" : entry.varianceMajorUnits < 0 ? "#dc2626" : "#d97706"}
+                fill={varianceBarColor(entry.varianceMajorUnits, entry.hasData)}
               />
             ))}
           </Bar>
