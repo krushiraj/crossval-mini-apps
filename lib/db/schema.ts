@@ -6,7 +6,7 @@
 //   - anything a user owns has a userId, and every query filters on it
 
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const createdAt = () =>
   integer("created_at", { mode: "timestamp_ms" })
@@ -157,4 +157,69 @@ export const pricingLineItems = sqliteTable(
     createdAt: createdAt(),
   },
   (table) => [index("pricing_line_items_document_idx").on(table.documentId, table.position)],
+);
+
+// Orders and Settlements
+
+export const orders = sqliteTable(
+  "orders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    customer: text("customer").notNull(),
+    // "YYYY-MM-DD"
+    dueDate: text("due_date").notNull(),
+    // Worked out from the lines on every write. The client never sends it.
+    totalMinorUnits: integer("total_minor_units").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("orders_user_due_date_idx").on(table.userId, table.dueDate)],
+);
+
+export const orderLineItems = sqliteTable(
+  "order_line_items",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    position: integer("position").notNull().default(0),
+    description: text("description").notNull(),
+    quantity: integer("quantity").notNull(),
+    unitPriceMinorUnits: integer("unit_price_minor_units").notNull(),
+    lineTotalMinorUnits: integer("line_total_minor_units").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (table) => [index("order_line_items_order_idx").on(table.orderId, table.position)],
+);
+
+// Payments are only ever added, never changed or deleted. The amount paid is
+// the sum of these rows, so there's no stored balance to fall out of step. A
+// correction is another row, not an edit.
+export const payments = sqliteTable(
+  "payments",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    amountMinorUnits: integer("amount_minor_units").notNull(),
+    // "YYYY-MM-DD"
+    paidDate: text("paid_date").notNull(),
+    note: text("note"),
+    // Sent by the client. Retrying with the same key returns the first payment
+    // rather than taking the money twice.
+    idempotencyKey: text("idempotency_key"),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("payments_order_idx").on(table.orderId),
+    uniqueIndex("payments_idempotency_key_idx").on(table.userId, table.idempotencyKey),
+  ],
 );
