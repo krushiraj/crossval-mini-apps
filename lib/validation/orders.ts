@@ -12,7 +12,7 @@ const isoDateSchema = z
   .refine(isIsoDate, { message: "Must be a valid date in YYYY-MM-DD format." });
 
 export const orderLineItemSchema = z.object({
-  description: z.string().trim().min(1, "Line item description is required.").max(200),
+  description: z.string().trim().min(1, "Line item description is required.").max(200, "Line item description must be 200 characters or fewer."),
   quantity: z.number().int("Quantity must be a whole number.").min(1, "Quantity must be at least 1.")
     .max(MAX_QUANTITY, "Quantity is too large."),
   unitPriceMinorUnits: z
@@ -23,14 +23,14 @@ export const orderLineItemSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
-  customer: z.string().trim().min(1, "Customer name is required.").max(200),
+  customer: z.string().trim().min(1, "Customer name is required.").max(200, "Customer name must be 200 characters or fewer."),
   dueDate: isoDateSchema,
   lines: z.array(orderLineItemSchema).min(1, "An order needs at least one line item."),
 });
 
 // Customer/due date edits are always allowed; lines are replaced separately via PUT .../lines.
 export const updateOrderSchema = z.object({
-  customer: z.string().trim().min(1, "Customer name is required.").max(200).optional(),
+  customer: z.string().trim().min(1, "Customer name is required.").max(200, "Customer name must be 200 characters or fewer.").optional(),
   dueDate: isoDateSchema.optional(),
 });
 
