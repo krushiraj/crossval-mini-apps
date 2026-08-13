@@ -4,6 +4,26 @@ import { nextCookies } from "better-auth/next-js";
 
 import { db, schema } from "@/lib/db";
 
+// Vercel sets the host, so preview deployments work without per-branch config.
+const resolveBaseUrl = (): string => {
+  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+};
+
+const baseURL = resolveBaseUrl();
+
+// Requests from anywhere else are refused, which is what stops another site
+// driving a signed-in session. Local development allows the ports Next.js
+// falls back to when 3000 is taken.
+const trustedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [baseURL, "https://*.vercel.app"]
+    : [baseURL, "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"];
+
 // One Better Auth instance shared by all three apps: a user signs up once and
 // their session is valid across /pricing, /orders and /planner.
 export const auth = betterAuth({
@@ -23,7 +43,8 @@ export const auth = betterAuth({
     minPasswordLength: 8,
   },
   secret: process.env.BETTER_AUTH_SECRET ?? "development-only-secret-change-me",
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL,
+  trustedOrigins,
   plugins: [nextCookies()],
 });
 
