@@ -89,7 +89,8 @@ const draftToPayload = (draft: LineDraft, index: number): { line: LinePayload } 
     return { error: `Line ${index + 1}: description is required.` };
   }
 
-  const quantity = Number(draft.quantity);
+  // Number("1e3") is 1000, which is not what anyone typing in this box meant.
+  const quantity = /^\d+$/.test(draft.quantity.trim()) ? Number(draft.quantity) : NaN;
   if (!Number.isInteger(quantity) || quantity < 1) {
     return { error: `Line ${index + 1}: quantity must be a whole number of at least 1.` };
   };

@@ -224,6 +224,22 @@ test.describe("orders", () => {
     await expect(page.getByRole("row", { name: /Northwind Trading/ })).toHaveCount(0);
   });
 
+  test("a price it can't read blocks the save instead of storing zero", async ({ page }) => {
+    await page.goto("/orders/new");
+    await page.getByLabel("Customer").fill("Bad price test");
+    await page.getByLabel("Due date").fill("2026-12-01");
+
+    const row = page.locator("form").first();
+    await row.getByLabel("Description").first().fill("Widget");
+    await row.getByLabel("Quantity").first().fill("1");
+    await row.getByLabel("Unit price").first().fill("7.777");
+
+    await page.getByRole("button", { name: /create order/i }).click();
+
+    await expect(page.getByText(/at most two decimal places/i).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/orders\/new/);
+  });
+
   test("an over-payment is rejected with the maximum allowed amount", async ({ page }) => {
     await page.goto("/orders");
 

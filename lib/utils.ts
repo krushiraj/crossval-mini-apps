@@ -5,10 +5,12 @@ export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
 };
 
-// Returns null rather than NaN when the text isn't an amount, so a typo shows
-// a field error instead of quietly becoming zero.
+// Null, never NaN or a guess: callers show a field error instead.
+// "10,50" is refused because it means ten fifty in Europe and 1050 here.
 export const parseAmountToMinorUnits = (input: string): number | null => {
-  const cleaned = input.replace(/[,\s$]/g, "");
+  const trimmed = input.replace(/[\s$]/g, "");
+  if (trimmed.includes(",") && !/^-?\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(trimmed)) return null;
+  const cleaned = trimmed.replace(/,/g, "");
   if (!/^-?\d+(\.\d{1,2})?$/.test(cleaned)) return null;
   const negative = cleaned.startsWith("-");
   const [whole, fraction = ""] = (negative ? cleaned.slice(1) : cleaned).split(".");

@@ -42,6 +42,10 @@ const actionLabel = (action: string): string => {
   return labels[action] ?? action;
 };
 
+// Number("1e3") is 1000; a quantity box should only take digits.
+const parseQuantity = (value: string): number | null =>
+  /^\d+$/.test(value.trim()) ? Number(value) : null;
+
 interface DraftLine {
   key: string;
   description: string;
@@ -59,7 +63,7 @@ const previewOrderTotal = (drafts: DraftLine[]): number | null => {
   try {
     const { totalMinorUnits } = computeOrderTotal(
       drafts.map((line, index) => ({
-        quantity: Number(line.quantity),
+        quantity: parseQuantity(line.quantity) as number,
         unitPriceMinorUnits: unitPrices[index] as number,
       })),
     );
@@ -138,8 +142,8 @@ const OrderDetailPage = () => {
         orderId,
         lineDrafts.map((line) => ({
           description: line.description,
-          quantity: Number(line.quantity),
-          unitPriceMinorUnits: parseAmountToMinorUnits(line.unitPrice) ?? 0,
+          quantity: parseQuantity(line.quantity) as number,
+          unitPriceMinorUnits: parseAmountToMinorUnits(line.unitPrice) as number,
         })),
       ),
     onSuccess: () => {
@@ -165,7 +169,7 @@ const OrderDetailPage = () => {
   const recordPaymentMutation = useMutation({
     mutationFn: () =>
       recordPayment(orderId, {
-        amountMinorUnits: parseAmountToMinorUnits(amountInput) ?? 0,
+        amountMinorUnits: parseAmountToMinorUnits(amountInput) as number,
         paidDate,
         note: note.trim() ? note.trim() : undefined,
       }),
@@ -191,6 +195,14 @@ const OrderDetailPage = () => {
   const handleRecordPayment = (event: React.FormEvent) => {
     event.preventDefault();
     setPaymentErrors({});
+
+    if (parseAmountToMinorUnits(amountInput) === null) {
+      setPaymentErrors({
+        amountMinorUnits: "Enter an amount like 25 or 25.00, with at most two decimal places.",
+      });
+      return;
+    }
+
     recordPaymentMutation.mutate();
   };
 
@@ -318,6 +330,24 @@ const OrderDetailPage = () => {
               onSubmit={(event) => {
                 event.preventDefault();
                 setLineErrors({});
+
+                // A price we can't read used to be sent as 0, wiping the total.
+                const problems: Record<string, string> = {};
+                lineDrafts.forEach((line, index) => {
+                  if (parseAmountToMinorUnits(line.unitPrice) === null) {
+                    problems[`lines.${index}.unitPriceMinorUnits`] =
+                      "Enter an amount like 25 or 25.00, with at most two decimal places.";
+                  }
+                  if (parseQuantity(line.quantity) === null) {
+                    problems[`lines.${index}.quantity`] = "Enter a whole number, like 1.";
+                  }
+                });
+                if (Object.keys(problems).length > 0) {
+                  setLineErrors(problems);
+                  toast.error("Check the highlighted amounts.");
+                  return;
+                }
+
                 replaceLinesMutation.mutate();
               }}
               className="space-y-3"
@@ -415,7 +445,13 @@ const OrderDetailPage = () => {
                   Add line
                 </Button>
               </div>
-              <div className="flex justify-end border-t border-slate-100 pt-3">
+              <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm font-medium text-slate-900">
+                  Estimated total:{" "}
+                  {previewOrderTotal(lineDrafts) === null
+                    ? "—"
+                    : formatMoney(previewOrderTotal(lineDrafts) as number)}
+                </span>
                 <div className="flex gap-2">
                   <Button type="submit" size="sm" loading={replaceLinesMutation.isPending}>
                     Save line items

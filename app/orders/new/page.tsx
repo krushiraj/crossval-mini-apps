@@ -14,6 +14,10 @@ import { formatMoney, parseAmountToMinorUnits } from "@/lib/utils";
 
 import { createOrder } from "../api";
 
+// Number("1e3") is 1000; a quantity box should only take digits.
+const parseQuantity = (value: string): number | null =>
+  /^\d+$/.test(value.trim()) ? Number(value) : null;
+
 interface DraftLine {
   key: string;
   description: string;
@@ -35,7 +39,7 @@ const previewOrderTotal = (drafts: DraftLine[]): number | null => {
   try {
     const { totalMinorUnits } = computeOrderTotal(
       drafts.map((line, index) => ({
-        quantity: Number(line.quantity),
+        quantity: parseQuantity(line.quantity) as number,
         unitPriceMinorUnits: unitPrices[index] as number,
       })),
     );
@@ -89,15 +93,31 @@ const NewOrderPage = () => {
     event.preventDefault();
     setFieldErrors({});
 
-    mutation.mutate({
-      customer,
-      dueDate,
-      lines: lines.map((line) => ({
+    // A price we can't read used to be sent as 0, silently making the line free.
+    const problems: Record<string, string> = {};
+    const payloadLines = lines.map((line, index) => {
+      const unitPriceMinorUnits = parseAmountToMinorUnits(line.unitPrice);
+      if (unitPriceMinorUnits === null) {
+        problems[`lines.${index}.unitPriceMinorUnits`] =
+          "Enter an amount like 25 or 25.00, with at most two decimal places.";
+      }
+      if (parseQuantity(line.quantity) === null) {
+        problems[`lines.${index}.quantity`] = "Enter a whole number, like 1.";
+      }
+      return {
         description: line.description,
-        quantity: Number(line.quantity),
-        unitPriceMinorUnits: parseAmountToMinorUnits(line.unitPrice) ?? 0,
-      })),
+        quantity: parseQuantity(line.quantity) as number,
+        unitPriceMinorUnits: unitPriceMinorUnits ?? 0,
+      };
     });
+
+    if (Object.keys(problems).length > 0) {
+      setFieldErrors(problems);
+      toast.error("Check the highlighted amounts.");
+      return;
+    }
+
+    mutation.mutate({ customer, dueDate, lines: payloadLines });
   };
 
   return (
