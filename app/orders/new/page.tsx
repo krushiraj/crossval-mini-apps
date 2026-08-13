@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
 import { Button, Card, CardBody, CardHeader, Field, Input } from "@/components/ui";
 import { ApiError } from "@/lib/api-client";
+import { computeOrderTotal } from "@/lib/calc/orders";
 import { todayIsoDate } from "@/lib/dates";
 import { formatMoney, parseAmountToMinorUnits } from "@/lib/utils";
 
@@ -24,6 +25,25 @@ const newDraftLine = (): DraftLine => {
   return { key: crypto.randomUUID(), description: "", quantity: "1", unitPrice: "" };
 };
 
+
+// Shows the total as you type, using the same computeOrderTotal the API uses.
+// The server still works it out again on save. Any line that isn't a valid
+// amount makes the whole preview "—" rather than a misleading part-total.
+const previewOrderTotal = (drafts: DraftLine[]): number | null => {
+  const unitPrices = drafts.map((line) => parseAmountToMinorUnits(line.unitPrice));
+  if (unitPrices.some((price) => price === null)) return null;
+  try {
+    const { totalMinorUnits } = computeOrderTotal(
+      drafts.map((line, index) => ({
+        quantity: Number(line.quantity),
+        unitPriceMinorUnits: unitPrices[index] as number,
+      })),
+    );
+    return totalMinorUnits;
+  } catch {
+    return null;
+  }
+};
 
 const NewOrderPage = () => {
   const router = useRouter();
@@ -63,12 +83,7 @@ const NewOrderPage = () => {
     setLines((current) => (current.length > 1 ? current.filter((line) => line.key !== key) : current));
   };
 
-  const estimatedTotal = lines.reduce((total, line) => {
-    const unitPrice = parseAmountToMinorUnits(line.unitPrice);
-    const quantity = Number(line.quantity);
-    if (unitPrice === null || !Number.isInteger(quantity)) return total;
-    return total + unitPrice * quantity;
-  }, 0);
+  const estimatedTotal = previewOrderTotal(lines);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -173,7 +188,7 @@ const NewOrderPage = () => {
             ))}
 
             <div className="flex justify-end border-t border-slate-100 pt-3 text-sm font-medium text-slate-900">
-              Estimated total: {formatMoney(estimatedTotal)}
+              Estimated total: {estimatedTotal === null ? "—" : formatMoney(estimatedTotal)}
             </div>
           </CardBody>
         </Card>

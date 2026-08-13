@@ -23,6 +23,8 @@ import {
   Th,
 } from "@/components/ui";
 import { ApiError, api } from "@/lib/api-client";
+import { computeLine } from "@/lib/calc/pricing";
+import type { DocumentTotals, LineTotals } from "@/lib/calc/pricing";
 import { formatIsoDate } from "@/lib/dates";
 import {
   basisPointsToPercentInput,
@@ -123,6 +125,35 @@ const draftToPayload = (draft: LineDraft, index: number): { line: LinePayload } 
       taxRateBasisPoints,
     },
   };
+};
+
+// Shows the numbers as you type, using the same calc module the API uses, so
+// it can't disagree with what saving will store. The server still works every
+// amount out again on save — that's what's kept. A row that isn't finished
+// previews as "—" rather than a half-right number.
+const previewLine = (draft: LineDraft, index: number): LineTotals | null => {
+  const payload = draftToPayload(draft, index);
+  if ("error" in payload) return null;
+  try {
+    return computeLine(payload.line, index);
+  } catch {
+    return null;
+  }
+};
+
+// Only meaningful once every row is valid.
+const previewDocument = (drafts: LineDraft[]): DocumentTotals | null => {
+  const previews = drafts.map((draft, index) => previewLine(draft, index));
+  if (previews.some((preview) => preview === null)) return null;
+  return (previews as LineTotals[]).reduce<DocumentTotals>(
+    (totals, line) => ({
+      subtotalMinorUnits: totals.subtotalMinorUnits + line.subtotalMinorUnits,
+      totalDiscountMinorUnits: totals.totalDiscountMinorUnits + line.discountMinorUnits,
+      totalTaxMinorUnits: totals.totalTaxMinorUnits + line.taxMinorUnits,
+      grandTotalMinorUnits: totals.grandTotalMinorUnits + line.totalMinorUnits,
+    }),
+    { subtotalMinorUnits: 0, totalDiscountMinorUnits: 0, totalTaxMinorUnits: 0, grandTotalMinorUnits: 0 },
+  );
 };
 
 // Pulls `lines.<index>.<field>` errors out of the field map so each row can show its own message.
@@ -314,6 +345,14 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
   const document = query.data;
   const isDraft = document.status === "draft";
 
+  const draftTotals = isDraft ? previewDocument(lines) : null;
+  const shownTotals: DocumentTotals = draftTotals ?? {
+    subtotalMinorUnits: document.subtotalMinorUnits,
+    totalDiscountMinorUnits: document.totalDiscountMinorUnits,
+    totalTaxMinorUnits: document.totalTaxMinorUnits,
+    grandTotalMinorUnits: document.grandTotalMinorUnits,
+  };
+
   return (
     <div className="print-sheet">
       <PageHeader
@@ -435,7 +474,7 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
                 {isDraft
                   ? lines.map((line, index) => {
                       const errors = lineErrors[index] ?? {};
-                      const preview = document.lines[index];
+                      const preview = previewLine(line, index);
                       return (
                         <tr key={line.id ?? `new-${index}`}>
                           <Td>
@@ -546,18 +585,20 @@ export const DocumentEditor = ({ documentId }: { documentId: string }) => {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="Subtotal" value={formatMoney(document.subtotalMinorUnits)} />
+        <Stat label="Subtotal" value={formatMoney(shownTotals.subtotalMinorUnits)} />
         <Stat
           label="Total discount"
-          value={formatMoney(document.totalDiscountMinorUnits)}
+          value={formatMoney(shownTotals.totalDiscountMinorUnits)}
           tone="negative"
         />
-        <Stat label="Total tax" value={formatMoney(document.totalTaxMinorUnits)} />
-        <Stat label="Grand total" value={formatMoney(document.grandTotalMinorUnits)} tone="positive" />
+        <Stat label="Total tax" value={formatMoney(shownTotals.totalTaxMinorUnits)} />
+        <Stat label="Grand total" value={formatMoney(shownTotals.grandTotalMinorUnits)} tone="positive" />
       </div>
       {isDraft ? (
-        <p className="no-print mt-2 text-xs text-slate-500">
-          Totals are from the last save. Click &ldquo;Save changes&rdquo; to work them out again.
+        <p className="no-print mt-2 text-xs text-slate-500" role="status">
+          {draftTotals
+            ? "Showing your unsaved edits. Save to store them — the server works them out again."
+            : "Some rows aren't finished, so these are the totals from the last save."}
         </p>
       ) : null}
     </div>

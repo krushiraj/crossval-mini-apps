@@ -65,6 +65,29 @@ test.describe("pricing", () => {
     await expect(main).toContainText("$421.50");
   });
 
+  test("line totals show as you type, before anything is saved", async ({ page }) => {
+    await page.goto("/pricing");
+    await page
+      .getByRole("row", { name: /Sample document from the brief/ })
+      .getByRole("link")
+      .first()
+      .click();
+
+    const row = page.locator("tbody tr").first();
+    await row.getByRole("textbox").nth(1).fill("20");
+    await row.getByRole("textbox").nth(2).fill("130.00");
+    await row.getByRole("combobox").selectOption("percent");
+    await row.getByRole("textbox").nth(3).fill("10");
+    await row.getByRole("textbox").nth(4).fill("5");
+    await row.getByRole("textbox").nth(4).blur();
+
+    // 20 x 130.00 = 2,600.00, less 10% = 2,340.00, plus 5% tax = 2,457.00
+    await expect(row).toContainText("$2,600.00");
+    await expect(row).toContainText("$260.00");
+    await expect(row).toContainText("$117.00");
+    await expect(row).toContainText("$2,457.00");
+  });
+
   test("a finalized document is read-only and offers duplication instead", async ({ page }) => {
     await page.goto("/pricing");
 

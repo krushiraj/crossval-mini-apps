@@ -22,6 +22,7 @@ import {
   Th,
 } from "@/components/ui";
 import { ApiError } from "@/lib/api-client";
+import { computeOrderTotal } from "@/lib/calc/orders";
 import { formatIsoDate, todayIsoDate } from "@/lib/dates";
 import { formatMoney, parseAmountToMinorUnits } from "@/lib/utils";
 
@@ -48,6 +49,25 @@ interface DraftLine {
   unitPrice: string;
 }
 
+
+// Shows the total as you type, using the same computeOrderTotal the API uses.
+// The server still works it out again on save. Any line that isn't a valid
+// amount makes the whole preview "—" rather than a misleading part-total.
+const previewOrderTotal = (drafts: DraftLine[]): number | null => {
+  const unitPrices = drafts.map((line) => parseAmountToMinorUnits(line.unitPrice));
+  if (unitPrices.some((price) => price === null)) return null;
+  try {
+    const { totalMinorUnits } = computeOrderTotal(
+      drafts.map((line, index) => ({
+        quantity: Number(line.quantity),
+        unitPriceMinorUnits: unitPrices[index] as number,
+      })),
+    );
+    return totalMinorUnits;
+  } catch {
+    return null;
+  }
+};
 
 const OrderDetailPage = () => {
   const params = useParams<{ id: string }>();
