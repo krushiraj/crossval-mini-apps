@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import * as React from "react";
-import { toast } from "sonner";
 
-import { signOut } from "@/lib/auth-client";
+import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui";
 
 export interface NavItem {
   href: string;
@@ -28,20 +26,6 @@ export const AppShell = ({
   children: React.ReactNode;
 }) => {
   const pathname = usePathname();
-  const router = useRouter();
-  const [signingOut, setSigningOut] = React.useState(false);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await signOut();
-      router.push("/login");
-      router.refresh();
-    } catch {
-      toast.error("Could not sign out. Please try again.");
-      setSigningOut(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -77,9 +61,7 @@ export const AppShell = ({
 
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-xs text-slate-500 sm:inline">{userEmail}</span>
-            <Button variant="secondary" size="sm" onClick={handleSignOut} loading={signingOut}>
-              Sign out
-            </Button>
+            <SignOutButton />
           </div>
         </div>
       </header>

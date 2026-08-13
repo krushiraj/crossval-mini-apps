@@ -37,6 +37,27 @@ test.describe("landing", () => {
   });
 });
 
+test.describe("session", () => {
+  // Signs in by itself rather than reusing the shared session, because signing
+  // out would invalidate it for every other spec.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("you can sign out from the landing page", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel("Email").fill("demo@crossval.test");
+    await page.getByLabel("Password").fill("demo12345");
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL("/");
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/login/);
+
+    // the session is really gone, not just the page changed
+    await page.goto("/pricing");
+    await expect(page).toHaveURL(/\/login\?next=%2Fpricing/);
+  });
+});
+
 test.describe("signed out", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 

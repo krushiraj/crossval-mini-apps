@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Calculator, PiggyBank, Receipt } from "lucide-react";
 
+import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui";
 import { getSessionUser } from "@/lib/session";
 
@@ -49,9 +50,12 @@ const HomePage = async () => {
           </p>
         </div>
         {user ? (
-          <span className="rounded-full bg-white px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200">
-            Signed in as {user.email}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200">
+              Signed in as {user.email}
+            </span>
+            <SignOutButton />
+          </div>
         ) : (
           <div className="flex gap-2">
             <Link href="/login">
