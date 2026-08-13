@@ -1,0 +1,68 @@
+// Calendar-date helpers.
+//
+// Due dates, issue dates and payment dates are calendar dates, not instants.
+// They are stored and compared as "YYYY-MM-DD" strings, which sort
+// lexicographically in chronological order and carry no timezone.
+
+export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const ISO_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export const isIsoDate = (value: string): boolean => {
+  if (!ISO_DATE_PATTERN.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
+};
+
+export const isIsoMonth = (value: string): boolean => {
+  return ISO_MONTH_PATTERN.test(value);
+};
+
+// Today in UTC as "YYYY-MM-DD".
+export const todayIsoDate = (): string => {
+  return new Date().toISOString().slice(0, 10);
+};
+
+// The month a calendar date belongs to: "2026-01-15" -> "2026-01".
+export const monthOf = (isoDate: string): string => {
+  return isoDate.slice(0, 7);
+};
+
+// Inclusive list of months between two "YYYY-MM" bounds.
+export const monthsBetween = (fromMonth: string, toMonth: string): string[] => {
+  const months: string[] = [];
+  let [year, month] = fromMonth.split("-").map(Number);
+  const [endYear, endMonth] = toMonth.split("-").map(Number);
+
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    months.push(`${year}-${month.toString().padStart(2, "0")}`);
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+  return months;
+};
+
+// Formats "2026-01" as "Jan 2026".
+export const formatMonth = (month: string): string => {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const name = new Date(Date.UTC(year, monthNumber - 1, 1)).toLocaleString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  return `${name} ${year}`;
+};
+
+// Formats "2026-01-15" as "15 Jan 2026".
+export const formatIsoDate = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const name = new Date(Date.UTC(year, month - 1, day)).toLocaleString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  return `${day} ${name} ${year}`;
+};

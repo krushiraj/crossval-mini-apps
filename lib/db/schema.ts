@@ -10,7 +10,7 @@
 //   - Every table a user owns has a userId, and every query filters on it.
 
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const createdAt = () =>
   integer("created_at", { mode: "timestamp_ms" })
@@ -75,3 +75,35 @@ export const verification = sqliteTable("verification", {
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
+
+// --------------------------------------------------------------------------
+// Audit trail, shared by all three apps
+// --------------------------------------------------------------------------
+
+// Append-only record of who changed what. Rows are written in the same
+// transaction as the change they describe, so the trail can never be missing
+// an entry for a change that did happen.
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // "pricing" | "orders" | "planner"
+    app: text("app").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    // e.g. "document.finalized", "payment.recorded", "payment.rejected"
+    action: text("action").notNull(),
+    // JSON with whatever context the action needs.
+    detail: text("detail"),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("audit_log_entity_idx").on(table.userId, table.entityType, table.entityId),
+    index("audit_log_user_created_idx").on(table.userId, table.createdAt),
+  ],
+);
+
+
