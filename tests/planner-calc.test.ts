@@ -263,6 +263,7 @@ describe("parseActualsCsv", () => {
     expect(result.rows).toHaveLength(1);
   });
 
+  // The API caps a single amount; the CSV used to be a way round that.
   it("rejects an amount above the cap the API enforces", () => {
     const csv = "month,category,amount\n2026-01,Marketing,2000000000\n";
     const result = parseActualsCsv(csv, { categoriesByName });
